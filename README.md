@@ -10,7 +10,7 @@ To run use this command: //you can change the numbers around to experiment with 
 
 ./sim_cache 32 8192 4 7 262144 8 gcc_trace.txt 
 
-This goes in the order BlockSize, L1Size, L1Assoc, VC#Blocks, L2Size, L2Assoc, ReadFile
+./sim_cache BlockSize, L1Size, L1Assoc, VC#Blocks, L2Size, L2Assoc, ReadFile
 
 ## Tagged Sequential Prefetcher
 
