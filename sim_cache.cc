@@ -61,45 +61,30 @@ int main (int argc, char* argv[])
     //PF1.SetCU(&PrefetchController);
 
     char str[2];
-    for (int i = 0; i < 1; i++)
+        // Open trace_file in read mode
+    FP = fopen(trace_file, "r");
+    if(FP == NULL)
     {
-            // Open trace_file in read mode
-        FP = fopen(trace_file, "r");
-        if(FP == NULL)
-        {
-            // Throw error and exit if fopen() failed
-            printf("Error: Unable to open file %s\n", trace_file);
-            exit(EXIT_FAILURE);
-        }
-            while(fscanf(FP, "%s %lx", str, &addr) != EOF)
-        { 
-            rw = str[0];
-            //for (int i = 0; i < 4; i++)
-            //    cout << VL1.VirtualMemory[0][i] << " ";
-            //cout << "Count" << endl; 
-            if (rw == 'r')
-            {   
-                //cout << VL1.VirtualMemory[0][15] << endl;
-                //cout << addr << endl;
-                /*if (addr == 1075022136)
-                {
-                    cout << "hi" << endl;
-                } */
-                L1.Read(DecToBinary(addr)); 
-                //printf("%s %lx\n", "read", addr);           // Print and test if file is read correctly
-                //cout << L2.Reads << endl;
-            }
-            else if (rw == 'w')
-            {   
-                //cout << addr << endl;
-                //cout << VL1.VirtualMemory[0][15] << endl;
-                L1.Write(DecToBinary(addr)); 
-                //printf("%s %lx\n", "write", addr);          // Print and test if file is read correctly
-                //cout << L2.Reads << endl;
-            }
-        }
-        fclose(FP);
+        // Throw error and exit if fopen() failed
+        printf("Error: Unable to open file %s\n", trace_file);
+        exit(EXIT_FAILURE);
     }
+        while(fscanf(FP, "%s %lx", str, &addr) != EOF)
+    { 
+        rw = str[0];
+        if (rw == 'r')
+        {   
+            L1.Read(DecToBinary(addr)); 
+
+        }
+        else if (rw == 'w')
+        {   
+
+            L1.Write(DecToBinary(addr)); 
+        }
+    }
+    fclose(FP);
+    
     
     //cout << "Total Miss L1 " << L1.Misses << endl << "Total Hits L1 " << L1.Hits << endl;
     cout << "Total Read L1 " << L1.Reads << endl << "Total Reads Misses L1 " << L1.ReadMiss << endl;

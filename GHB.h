@@ -12,9 +12,8 @@ struct GHBEntry
     GHBEntry* Previous = nullptr;
     GHBEntry* Duplicate = nullptr;
     int HashStep = 0;
-    GHBEntry(string addr) : Address(addr), Next(nullptr) {} //also this is apparently a better way to assign than directly in the constructor
+    GHBEntry(string addr) : Address(addr), Next(nullptr) {} 
 };
-
 struct IT 
 {   
     GHB* Connection;
@@ -23,7 +22,7 @@ struct IT
     int BlockSize;
     IT (size_t buffersize, int blocksize, GHB* connection) : BufferSize(buffersize), BlockSize(blocksize), Connection(connection) 
     {
-        IndexTable.resize(BufferSize, nullptr); //not sure if this executes before the buffersize is given a proper size
+        IndexTable.resize(BufferSize, nullptr); 
     };
     void LookUp (GHBEntry* entry) 
     {   
@@ -77,7 +76,7 @@ struct IT
             {
                 Current = Current->Duplicate;
             };
-            Current->Duplicate = nullptr;
+            Current->Duplicate = nullptr; //dumb way to do it but oh well
         }
         else
         {
@@ -144,7 +143,7 @@ public:
     };
     struct CompareByCounter 
     {
-        bool operator()(const MarkovEntry& a, const MarkovEntry& b) const //chatgpt generated no clue about the sort function cool though
+        bool operator()(const MarkovEntry& a, const MarkovEntry& b) const 
         {
             return a.Counter > b.Counter;
         }
