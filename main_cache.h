@@ -521,7 +521,7 @@ public:
         AddressSize = (32 - BlockOffsetBits);
         BAMemory.resize(0); //first layer of virtual memory is set
     }
-    bool Read (string bincurrentaddress) //sees if the current address matches the block in the front of the buffer 
+    bool Read (string bincurrentaddress) //sees if the current address matches the blocks in the buffer 
     {   
         char PrefetchDecider; 
         bool PrefetchHit = false;
@@ -592,7 +592,7 @@ public:
         int Index1 = 0; 
         for (string &element1 : pushback)
         {
-            for (string &element2 : BAMemory) //cool iterator based on the reference to the original vector //this checks for duplicates in prefetch buffer and pushback not L1
+            for (string &element2 : BAMemory)  //this checks for duplicates in prefetch buffer and pushback not L1
             {
                 if (element1 == element2)
                 {

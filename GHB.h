@@ -105,7 +105,7 @@ public:
     static bool CompareByValue(const MarkovEntry& a, const MarkovEntry& b); 
     GHBEntry* Head = nullptr;
     GHBEntry* Tail = nullptr;
-    size_t BufferSize = 0; //apparently I should use this when counting size instead of unsigned int idk
+    size_t BufferSize = 0; 
     size_t Count = 0;
     int PushBackSize;
     GHB (size_t buffersize, int pushbacksize) : BufferSize(buffersize), PushBackSize(pushbacksize) {};
