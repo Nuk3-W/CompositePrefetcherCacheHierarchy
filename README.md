@@ -5,7 +5,9 @@ This project is a high-performance, configurable cache hierarchy simulator writt
 The thing this memory hierarchy does differently is implement a custom composite prefetcher that swaps between two prefetching strategies: a Tagged Sequential Prefetcher and a Markov Prefetcher. This is done through a simple weighted control unit that determines these weights using a superblock, a hashed memory location derived from the idea of memory blocks which are seen within caches to maximize spatial locality. Based on how many hits are received in these superblocks gives a preference towards one of these prefetchers.
 
 
-To run use this command: //you can change the numbers around to experiment with different cache configurations however be careful on sizes which should be held to byte sizes
+To run use this command: //you can change the numbers around to experiment with different cache configurations be careful with certain sized
+
+
 ./sim_cache 32 8192 4 7 262144 8 gcc_trace.txt 
 This goes in the order BlockSize, L1Size, L1Assoc, VC#Blocks, L2Size, L2Assoc, ReadFile
 
