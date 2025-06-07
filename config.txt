@@ -1,0 +1,7 @@
+block_size=64
+l1_size=8192
+l1_assoc=4
+vc_num_blocks=8
+l2_size=65536
+l2_assoc=8
+trace_file=gcc_trace.txt

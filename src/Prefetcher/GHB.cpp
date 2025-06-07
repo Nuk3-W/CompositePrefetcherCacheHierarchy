@@ -5,15 +5,7 @@
 
 class GHB;
 
-struct GHBEntry
-{   
-    string Address;
-    GHBEntry* Next = nullptr;
-    GHBEntry* Previous = nullptr;
-    GHBEntry* Duplicate = nullptr;
-    int HashStep = 0;
-    GHBEntry(string addr) : Address(addr), Next(nullptr) {} 
-};
+
 struct IT 
 {   
     GHB* Connection;
