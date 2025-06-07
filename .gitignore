@@ -1,0 +1,27 @@
+# Visual Studio files
+.vs/
+**.sln
+**.vcxproj
+**.vcxproj.filters
+**.vcxproj.user
+**.csproj
+
+# CMake build files
+build/
+CMakeFiles/
+CMakeCache.txt
+*.cmake
+cmake_install.cmake
+Makefile
+
+# Compiled object files and binaries
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.out
+
+# Logs and temp files
+*.log
+*.tmp
