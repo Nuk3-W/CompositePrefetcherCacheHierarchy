@@ -1,6 +1,6 @@
 #include "CacheManager.h"
 
-constexpr Address g_invalidAddress = 0x00000000;
+extern constexpr Address g_invalidAddress = 0x00000000;
 
 CacheManager::CacheManager(const SystemCacheParams& params){
     // Initialize normal caches
@@ -57,11 +57,44 @@ void CacheManager::read(Address addr) {
     } // (7)
 }
 
-//void CacheManager::write(Address addr) {
-//    for (int i = 0; i < caches_.size(); ++i) {
-//
-//    }
-//}
+/*
+Meaning of writeBack after write():
+    - g_invalidAddress: Cache hit
+    - addr: Cache miss, but no eviction occurred
+    - Other address: Cache miss with eviction — write-back required
+
+Write function structure:
+    (1) If previous cache had an eviction, write back the evicted block {recursive}
+    (2) Try to write from current level cache
+            - If hit, return
+
+    (3) If current cache has a victim cache:
+        (4)   Write back evicted block if needed
+        (5)   Try to write from victim cache
+        (6)   If hit, swap the address with the one in the main cache
+        (7)   continue to next level cache
+*/
+void CacheManager::write(Address addr) {
+    Address writeBack = g_invalidAddress;
+
+    for (int level = 0; level < caches_.size(); ++level) {
+        handleLevelWriteBack(writeBack, level); // (1) 
+
+        writeBack = caches_[level].write(addr); // (2)
+
+        if (isCacheHit(writeBack)) return; 
+
+        if (vCaches_[level].isValid()) { // (3)
+            handleVictimWriteBack(writeBack, level); // (4)
+
+            writeBack = vCaches_[level].write(addr); // (5)
+            if (isCacheHit(writeBack)) { // (6)
+                // Swap the address in the main cache with the one in the victim cache [TODO]
+                return;
+            }
+        }
+    } // (7)
+}
 
 bool CacheManager::isCacheHit(Address writeBack) const {
     return writeBack == g_invalidAddress;
@@ -71,9 +104,7 @@ bool CacheManager::isCacheHit(Address writeBack) const {
 void CacheManager::handleLevelWriteBack(Address writeBack, int level) {
 	if (level >= caches_.size()) return;
 
-	if (writeBack == g_invalidAddress) {
-		return;
-	}
+	if (writeBack == g_invalidAddress) return; // nothing to write back
 
 	// Write back to this cache level
 	Address evicted = caches_[level].writeBack(writeBack);
@@ -89,9 +120,7 @@ void CacheManager::handleLevelWriteBack(Address writeBack, int level) {
 void CacheManager::handleVictimWriteBack(Address writeBack, int level) {
 	if (level >= vCaches_.size() || !vCaches_[level].isValid()) return; // most likely redundant check
 
-    if (writeBack == g_invalidAddress) {
-        return;
-    }
+	if (writeBack == g_invalidAddress) return; // nothing to write back
 
     // Write back to victim cache at this level
     Address evicted = vCaches_[level].writeBack(writeBack);
