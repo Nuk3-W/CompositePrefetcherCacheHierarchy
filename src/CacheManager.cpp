@@ -1,7 +1,5 @@
 #include "CacheManager.h"
 
-extern constexpr Address g_invalidAddress = 0x00000000;
-
 CacheManager::CacheManager(const SystemCacheParams& params){
     // Initialize normal caches
     for (const CacheParams& cacheParam : params.caches_) {

@@ -3,6 +3,8 @@
 #include <unordered_map>
 #include "SystemCacheData.h"
 
+
+// [TODO] compute rest of paramters and fix parser
 bool loadConfigFromFile(const std::string& filename, SystemCacheParams& params, std::string& traceFile) {
     std::ifstream config(filename);
     if (!config.is_open()) {
