@@ -3,10 +3,20 @@ project(CacheSim)
 
 set(CMAKE_CXX_STANDARD 17)
 
+
+file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/src/*.cpp)
+
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
-file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS src/*.cpp)
+add_executable(CacheSim ${SRC_FILES})
 
-add_executable(CacheSim ${SOURCES} "include/Caches/LevelCache.h" "include/Caches/VictimCache.h" "include/Prefetcher/ControlUnit.h" "include/Prefetcher/GHB.h" "include/CacheManager.h" "src/CacheManager.cpp" "include/Caches/CacheData.h" "include/Prefetcher/PrefetcherData.h" "src/ConfigParser.cpp")
+add_executable(test_config
+    tests/test_config.cpp
+    src/ConfigParser.cpp
+)
 
-file(COPY ${PROJECT_SOURCE_DIR}/tests DESTINATION ${CMAKE_BINARY_DIR})
+add_custom_command(TARGET test_config POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    ${PROJECT_SOURCE_DIR}/config.txt
+    $<TARGET_FILE_DIR:test_config>
+)

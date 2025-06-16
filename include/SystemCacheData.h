@@ -7,6 +7,9 @@
 //#include "Prefetcher/PrefetcherData.h"
 
 struct SystemCacheParams {
+    unsigned long blockSize_;
+    std::string traceFile_; 
+
     std::vector<CacheParams> caches_;
     std::vector<CacheParams> vCaches_;
 };

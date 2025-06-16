@@ -2,9 +2,12 @@
 #include <fstream>
 #include <string>
 #include <stdexcept>
+#include <limits>
 
 #include "SystemCacheData.h"
 #include "CacheManager.h"
+
+void loadConfigFromFile(std::string_view filename, std::string_view traceFile, SystemCacheParams& params);
 
 int main(int argc, char* argv[]) {
     using std::cerr;

@@ -11,9 +11,6 @@ struct CacheParams {
     unsigned long size_;
     unsigned long sets_;
     unsigned long assoc_;
-    unsigned long byteOffset_;
-    unsigned long setOffset_;
-    unsigned long tagOffset_;
 };
 
 struct CacheStats {
