@@ -1,4 +1,4 @@
-# Cache Hierarchy Simulator with Composite Prefetcher
+# Cache Hierarchy Simulator with Composite Prefetcher (currently working on rewrite)
 
 This project is a high-performance, configurable cache hierarchy simulator written in C++. It implements modern memory protocols such as Least Recently Used (LRU), Write Back Write Allocate (WBWA), and victim caches to achieve standard memory performance for single-core CPUs. 
 
