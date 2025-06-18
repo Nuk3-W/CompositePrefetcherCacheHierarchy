@@ -1,84 +1,142 @@
 #include "Caches/LevelCache.h"
 
-LevelCache::LevelCache(CacheParams params) :
+LevelCache::LevelCache(const CacheParams& params) :
 	params_( params ),
 	stats_ ( ),
 	cache_ ( params_.sets_ * params_.assoc_ ),
 	extraBits_ ( params_.sets_ * params_.assoc_ ) {
-		//cache address bits initialization
-		int blockBits = std::log2(params_.blockSize_);
-		int setBits = std::log2(params_.sets_);
-		int tagBits = sizeof(Address) * 8 - (blockBits + setBits);
+	//cache address bits initialization
+	int blockBits = std::log2(params_.blockSize_);
+	int setBits = std::log2(params_.sets_);
+	int tagBits = sizeof(Address) * 8 - (blockBits + setBits);
 
-		bitMasks_.offsetBits_ = makeMask(0, blockBits);
-		bitMasks_.setBits_ = makeMask(blockBits, setBits);
-		bitMasks_.tagBits_ = makeMask(blockBits + setBits, tagBits);
+	bitMasks_.offsetBits_ = makeMask(0, blockBits);
+	bitMasks_.setBits_ = makeMask(blockBits, setBits);
+	bitMasks_.tagBits_ = makeMask(blockBits + setBits, tagBits);
 
-		//metadata bits initialization
-		int lruBits = std::log2(params_.assoc_);
-		int validBits = 1;
-		int dirtyBits = 1;
+	//metadata bits initialization
+	int lruBits = std::log2(params_.assoc_);
+	int validBits = 1;
+	int dirtyBits = 1;
 
-		bitMasks_.lruBits_ = makeMask(0, lruBits);
-		bitMasks_.validBits_ = makeMask(lruBits, validBits);
-		bitMasks_.dirtyBits_ = makeMask(lruBits + validBits, dirtyBits);
+	bitMasks_.lruBits_ = makeMask(0, lruBits);
+	bitMasks_.validBits_ = makeMask(lruBits, validBits);
+	bitMasks_.dirtyBits_ = makeMask(lruBits + validBits, dirtyBits);
 }
 
-LevelCache::~LevelCache() = default;
-
-/*
-Read function structure:
-	(1) use bitmask to check correct set
-	(2) iterate through set to find matching tag
-	(3) if found, return g_invalidAddress and update stats as cache hit
-	(4) if not found, find maxLRU block in set
-	(5) if dirty, return the blocks address for write-back
-	(6) if not dirty, return addr
-
-additionally update the lru of whichever way is chosen
-*/
-Address LevelCache::read(Address addr) {
-	//contains the set and tag of the address
+Address LevelCache::read(Address addr) { 
 	DecodedAddress dAddr = decodeAddress(addr);
 
-	for (int i = 0; i < params_.assoc_; ++i) { // (2)
-		Address cacheTag = cache_[dAddr.set + i] & bitMasks_.tagBits_;
-		Address cacheValid = extraBits_[dAddr.set + i] & bitMasks_.validBits_;
-
-		// skip invalid blocks with no data
-		if (!cacheValid) continue; 
-
-		if (cacheTag == dAddr.tag) {
-			updateLRU(dAddr.set, i);
-			updateReadStats(true); // (3) Cache Hit
-			return g_invalidAddress;
-		}
+	int hitIndex = findInSet(dAddr);
+	if (hitIndex != -1){
+		updateLRU(dAddr.set, hitIndex);
+		updateReadStats(true); 
+		return g_invalidAddress;
 	}
-	Address victim = getVictimLRU(dAddr.set);
-	updateLRU(dAddr.set, victim);
+
+	int victimIndex = getVictimLRU(dAddr.set);
+	updateLRU(dAddr.set, victimIndex);
+	Address evictedAddr = handleCacheEviction(dAddr, victimIndex, addr);
+
+	if (isDirtyBlock(dAddr.set + victimIndex)) updateDirty(dAddr.set, victimIndex);
+
 	updateReadStats(false);
-	// we need to update the address because it gets put in after the write back
-	Address evictedAddr = cache_[dAddr.set + victim];
-	// insert new address
-	cache_[dAddr.set + victim] = addr;
-	extraBits_[dAddr.set + victim] |= bitMasks_.validBits_;
 
-	Address cacheDirty = extraBits_[dAddr.set + victim] & bitMasks_.dirtyBits_;
-
-	if (cacheDirty) {
-		updateDirty(dAddr.set, victim);
-		return evictedAddr; // (5)
-	}
-
-	return addr; // (6)	
+	return evictedAddr;
 }
 
-Address LevelCache::write(Address addr) {
 
+
+Address LevelCache::write(Address addr) {
+	DecodedAddress dAddr = decodeAddress(addr);
+
+	int hitIndex = findInSet(dAddr);
+	if ( hitIndex != -1 ){
+		if (!isDirtyBlock(dAddr.set + hitIndex)) updateDirty(dAddr.set, hitIndex);
+		updateLRU(dAddr.set, hitIndex);
+		updateWriteStats(true);
+		return g_invalidAddress;
+	}
+
+	int victimIndex = getVictimLRU(dAddr.set);
+
+	updateLRU(dAddr.set, victimIndex);
+	Address evictedAddr = handleCacheEviction(dAddr, victimIndex, addr);
+
+	if (!isDirtyBlock(dAddr.set + victimIndex)) updateDirty(dAddr.set, victimIndex);
+
+	updateWriteStats(false);
+
+	return evictedAddr;
 }
 
 Address LevelCache::writeBack(Address addr) { //needs to return either an addr other than the current one or g_invalidAddress
+	return 0;
+}
 
+int LevelCache::findInSet(const DecodedAddress& dAddr) const {
+	for (int i = 0; i < params_.assoc_; ++i){
+		int cacheIndex = dAddr.set + i;
+
+		// skip invalid blocks
+		if (!isValidBlock(cacheIndex)) continue; 
+
+		Address cacheTag = cache_[cacheIndex] & bitMasks_.tagBits_;
+		if (cacheTag == dAddr.tag) return i;
+
+		//std::cout << "debug in findInSet" << std::endl;
+	}
+	//not found in cache
+	return -1;
+}
+
+int LevelCache::getVictimLRU(Address set) const {
+	// Find the way with the maximum LRU value in the set
+	std::pair<int, int> maxLRUWay = { 0, 0 };
+	// Initialize with the first way's LRU value
+	for ( int i = 0; i < params_.assoc_; ++i ) {
+		Address cacheLRU = extraBits_[set + i] & bitMasks_.lruBits_;
+		// check if the current way has a higher LRU value
+		if ( cacheLRU > maxLRUWay.second ) {
+			maxLRUWay = { i, cacheLRU };
+		}
+	}
+	return maxLRUWay.first;
+}
+
+void LevelCache::updateLRU(int set, int way) {
+	Address checkLRU = extraBits_[set + way] & bitMasks_.lruBits_;
+
+	for ( int i = 0; i < params_.assoc_; ++i ) {
+		Address currentLRU = extraBits_[set + i] & bitMasks_.lruBits_;
+		// increment LRU for all blocks with lower LRU value than current
+		if ( currentLRU < checkLRU ) extraBits_[set + i] += 1;
+	}
+	// reset the evicted block's LRU bits to 0
+	extraBits_[set + way] &= ~bitMasks_.lruBits_;
+}
+
+Address LevelCache::handleCacheEviction(const DecodedAddress& dAddr, int victimIndex, Address newAddr) {
+	int cacheIndex = dAddr.set + victimIndex;
+
+	Address evictedAddr = cache_[cacheIndex];
+
+	cache_[cacheIndex] = newAddr;
+	extraBits_[cacheIndex] |= bitMasks_.validBits_;
+
+	if (isDirtyBlock(cacheIndex)) {
+		return evictedAddr; 
+	}
+
+	return newAddr;
+}
+
+bool LevelCache::isDirtyBlock(int cacheIndex) const {
+	return extraBits_[cacheIndex] & bitMasks_.dirtyBits_;
+}
+
+bool LevelCache::isValidBlock(int cacheIndex) const {
+	return extraBits_[cacheIndex] & bitMasks_.validBits_;
 }
 
 LevelCache::DecodedAddress LevelCache::decodeAddress(Address addr) const {
@@ -89,33 +147,7 @@ LevelCache::DecodedAddress LevelCache::decodeAddress(Address addr) const {
 	// Extract tag bits
 	Address tag = addr & bitMasks_.tagBits_;
 
-	return { setIndex, tag };
-}
-
-Address LevelCache::getVictimLRU(Address set) const {
-	// Find the way with the maximum LRU value in the set
-	std::pair<int, int> maxLRUWay = { 0, 0 };
-	// Initialize with the first way's LRU value
-	for (int i = 0; i < params_.assoc_; ++i) {
-		Address cacheLRU = extraBits_[set + i] & bitMasks_.lruBits_;
-		// check if the current way has a higher LRU value
-		if (cacheLRU > maxLRUWay.second) {
-			maxLRUWay = { i, cacheLRU };
-		}
-	}
-	return maxLRUWay.first;
-}
-
-void LevelCache::updateLRU(int set, int way) {
-	Address checkLRU = extraBits_[set + way] & bitMasks_.lruBits_;
-
-	for (int i = 0; i < params_.assoc_; ++i) {
-		Address currentLRU = extraBits_[set + i] & bitMasks_.lruBits_;
-		// increment LRU for all blocks with lower LRU value than current
-		if (currentLRU < checkLRU) extraBits_[set + i] += 1; 
-	}
-	// reset the new way in the set
-	extraBits_[set + way] &= ~bitMasks_.lruBits_;
+	return { tag, setIndex };
 }
 
 void LevelCache::updateDirty(int set, int way) {

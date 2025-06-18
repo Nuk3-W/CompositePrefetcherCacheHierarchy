@@ -3,34 +3,39 @@
 
 #include <vector>
 #include <cmath>
+#include <iostream>
 
 #include "CacheData.h"
 
 class LevelCache {
 public:
-	LevelCache(CacheParams params);
-	virtual ~LevelCache();
+	LevelCache(const CacheParams& params);
 
-	//returns writeback address. 0 if none as 0x00000000 is not a valid address
 	virtual Address read(Address addr); 
 	virtual Address write(Address addr);
 
 	virtual Address writeBack(Address addr);
 private:
-	// my morals stop me from using a struct def here
-	Address makeMask(int start, int length) const;
-	
-	Address getVictimLRU(Address set) const;
+	struct DecodedAddress;
+	int getVictimLRU(Address set) const;
+
+	int findInSet(const DecodedAddress& dAddr) const;
+
+	bool isValidBlock(int cacheIndex) const;
+	bool isDirtyBlock(int cacheIndex) const;
+
+	Address handleCacheEviction(const DecodedAddress& dAddr, int victimIndex, Address newAddr);
 
 	void updateLRU(int set, int way);
 	void updateDirty(int set, int way);
 
-	struct DecodedAddress;
 	DecodedAddress decodeAddress(Address addr) const;
 
 	void updateReadStats(bool hit);
 	void updateWriteStats(bool hit);
 	void updateWriteBackStats(bool hit);
+
+	Address makeMask(int start, int length) const;
 private:
 	struct BitMasks {
 		Address tagBits_;

@@ -8,6 +8,8 @@
 
 #include "SystemCacheData.h"
 
+// tested and works
+
 
 void buildMaps(std::unordered_map<std::string, unsigned long>& sizeMap,
                std::unordered_map<std::string, unsigned long>& assocMap,
@@ -56,11 +58,16 @@ void buildCacheParams(const std::unordered_map<std::string, unsigned long>& size
                       const std::unordered_map<std::string, unsigned long>& victimMap,
                       SystemCacheParams& sysParams) {
 
+    sysParams.caches_.resize(sizeMap.size());
+    sysParams.vCaches_.resize(sizeMap.size());
+
     for ( const auto& [level, size] : sizeMap ) {
         if ( assocMap.find(level) == assocMap.end() ) {
             std::cerr << "Missing assoc for " << level << "\n";
             continue;
         }
+
+        int levelNum = std::stoi(level.substr(1, 1)) - 1; 
 
         unsigned long assoc = assocMap.at(level);
         unsigned long sets = size / ( sysParams.blockSize_ * assoc );
@@ -72,7 +79,7 @@ void buildCacheParams(const std::unordered_map<std::string, unsigned long>& size
         cache.assoc_ = assoc;
         cache.sets_ = sets;
 
-        sysParams.caches_.push_back(cache);
+        sysParams.caches_[levelNum] = cache;
     }
 
     for ( const auto& [level, numOfBlocks] : victimMap ) {
@@ -80,13 +87,15 @@ void buildCacheParams(const std::unordered_map<std::string, unsigned long>& size
 		unsigned long size = numOfBlocks * sysParams.blockSize_;
         unsigned long sets = size / ( sysParams.blockSize_ * assoc );
 
+        int levelNum = std::stoi(level.substr(1)) - 1; // Convert to 0-based index
+
         CacheParams vcache;
 
         vcache.blockSize_ = sysParams.blockSize_;
         vcache.size_ = size;
         vcache.assoc_ = assoc;
         vcache.sets_ = sets;
-        sysParams.vCaches_.push_back(vcache);
+        sysParams.vCaches_[levelNum] = vcache;
 	}
 }
 

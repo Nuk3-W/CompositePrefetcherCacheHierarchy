@@ -7,7 +7,7 @@
 #include "SystemCacheData.h"
 #include "CacheManager.h"
 
-void loadConfigFromFile(std::string_view filename, std::string_view traceFile, SystemCacheParams& params);
+void loadConfigFromFile(SystemCacheParams& params);
 
 int main(int argc, char* argv[]) {
     using std::cerr;
@@ -15,47 +15,24 @@ int main(int argc, char* argv[]) {
     using std::endl;
     using std::string;
 
-    if (argc != 2) {
-        cerr << "Usage: " << argv[0] << " <config_file>\n";
-        return EXIT_FAILURE;
-    }
-
+    //trace file contained within params
     SystemCacheParams params{};
-    string trace_file;
 
-    try { //fix params input
-        params.l1_.blockSize_ = params.l2_.blockSize_ = params.l3_.blockSize_ = params.vCache_.blockSize_ = std::stoul(argv[1]); //best as a global but Id rather it all be encasulated in the class
-        params.l1_size = std::stoul(argv[2]);
-        params.l1_assoc = std::stoul(argv[3]);
-        params.vc_num_blocks = std::stoul(argv[4]);
-        params.l2_size = std::stoul(argv[5]);
-        params.l2_assoc = std::stoul(argv[6]);
-    }
-    catch (const std::exception& e) {
-        cerr << "Invalid numeric input: " << e.what() << endl;
-        return EXIT_FAILURE;
-    }
+	loadConfigFromFile(params);
 
-    string trace_file = argv[7];
-    
-    // Print parameters
-    cout << "  ===== Simulator configuration =====\n"
-        << "  L1_BLOCKSIZE:                     " << params.block_size << "\n"
-        << "  L1_SIZE:                          " << params.l1_size << "\n"
-        << "  L1_ASSOC:                         " << params.l1_assoc << "\n"
-        << "  VC_NUM_BLOCKS:                    " << params.vc_num_blocks << "\n"
-        << "  L2_SIZE:                          " << params.l2_size << "\n"
-        << "  L2_ASSOC:                         " << params.l2_assoc << "\n"
-        << "  trace_file:                       " << trace_file << "\n"
-        << "  ===================================\n\n";
+    //std::cout << "debug check 1" << std::endl;
 
 	CacheManager cacheManager(params);
 
-    std::ifstream trace(trace_file);
+    //std::cout << "debug check 2" << std::endl;
+
+    std::ifstream trace(params.traceFile_);
     if (!trace.is_open()) {
-        cerr << "Error: Could not open file " << trace_file << endl;
+        cerr << "Error: Could not open file " << params.traceFile_ << endl;
         return EXIT_FAILURE;
     }
+
+    //std::cout << "debug check 3" << std::endl;
 
     char op;
     Address addr;
@@ -63,9 +40,11 @@ int main(int argc, char* argv[]) {
     while (trace >> op >> std::hex >> addr) {
         if (op == 'r') {
 			cacheManager.read(addr);
+			std::cout << "Read from address: " << std::hex << addr << std::dec << endl;
         }
         else if (op == 'w') {
             cacheManager.write(addr);
+            std::cout << "Write from address: " << std::hex << addr << std::dec << endl;
         }
         else {
             cerr << "Unknown operation: " << op << endl;

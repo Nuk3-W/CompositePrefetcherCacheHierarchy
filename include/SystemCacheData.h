@@ -2,6 +2,7 @@
 #define SYSTEM_CACHE_DATA_H
 
 #include <vector>
+#include <string>
 
 #include "Caches/CacheData.h"
 //#include "Prefetcher/PrefetcherData.h"
