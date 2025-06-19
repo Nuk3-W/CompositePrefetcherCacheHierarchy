@@ -40,11 +40,11 @@ int main(int argc, char* argv[]) {
     while (trace >> op >> std::hex >> addr) {
         if (op == 'r') {
 			cacheManager.read(addr);
-			std::cout << "Read from address: " << std::hex << addr << std::dec << endl;
+			//std::cout << "Read from address: " << std::hex << addr << std::dec << endl;
         }
         else if (op == 'w') {
             cacheManager.write(addr);
-            std::cout << "Write from address: " << std::hex << addr << std::dec << endl;
+            //std::cout << "Write from address: " << std::hex << addr << std::dec << endl;
         }
         else {
             cerr << "Unknown operation: " << op << endl;

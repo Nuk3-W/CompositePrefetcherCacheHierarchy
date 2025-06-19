@@ -23,8 +23,8 @@ public:
 private:
     bool isCacheHit(Address result) const;
 
-    void handleLevelWriteBack(Address writeBack, int level);
-    void handleVictimWriteBack(Address writeBack, int level);
+    void handleLevelWriteBack(Address writeBack, std::size_t level);
+    void handleVictimWriteBack(Address writeBack, std::size_t level);
 
     std::vector<LevelCache> caches_;
     std::vector<VictimCache> vCaches_; //this is configureable to allow for more than just L1 victim cache 

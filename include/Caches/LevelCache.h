@@ -13,8 +13,6 @@ public:
 
 	virtual Address read(Address addr); 
 	virtual Address write(Address addr);
-
-	virtual Address writeBack(Address addr);
 private:
 	struct DecodedAddress;
 	int getVictimLRU(Address set) const;
@@ -22,12 +20,16 @@ private:
 	int findInSet(const DecodedAddress& dAddr) const;
 
 	bool isValidBlock(int cacheIndex) const;
+	void setValid(int set, int way);
+
 	bool isDirtyBlock(int cacheIndex) const;
+	void setDirty(int set, int way);
+	void clearDirty(int set, int way);
 
 	Address handleCacheEviction(const DecodedAddress& dAddr, int victimIndex, Address newAddr);
 
 	void updateLRU(int set, int way);
-	void updateDirty(int set, int way);
+
 
 	DecodedAddress decodeAddress(Address addr) const;
 

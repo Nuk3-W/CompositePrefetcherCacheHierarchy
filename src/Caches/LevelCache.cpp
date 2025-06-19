@@ -38,21 +38,19 @@ Address LevelCache::read(Address addr) {
 	updateLRU(dAddr.set, victimIndex);
 	Address evictedAddr = handleCacheEviction(dAddr, victimIndex, addr);
 
-	if (isDirtyBlock(dAddr.set + victimIndex)) updateDirty(dAddr.set, victimIndex);
+	clearDirty(dAddr.set, victimIndex);
 
 	updateReadStats(false);
 
 	return evictedAddr;
 }
 
-
-
-Address LevelCache::write(Address addr) {
+Address LevelCache::write(Address addr) { //possible change for more clear code just always reset the dirty bit and let the caller change back the dirty bit so its less for read
 	DecodedAddress dAddr = decodeAddress(addr);
 
 	int hitIndex = findInSet(dAddr);
 	if ( hitIndex != -1 ){
-		if (!isDirtyBlock(dAddr.set + hitIndex)) updateDirty(dAddr.set, hitIndex);
+		setDirty(dAddr.set, hitIndex);
 		updateLRU(dAddr.set, hitIndex);
 		updateWriteStats(true);
 		return g_invalidAddress;
@@ -60,18 +58,14 @@ Address LevelCache::write(Address addr) {
 
 	int victimIndex = getVictimLRU(dAddr.set);
 
-	updateLRU(dAddr.set, victimIndex);
 	Address evictedAddr = handleCacheEviction(dAddr, victimIndex, addr);
 
-	if (!isDirtyBlock(dAddr.set + victimIndex)) updateDirty(dAddr.set, victimIndex);
+	updateLRU(dAddr.set, victimIndex);
+	setDirty(dAddr.set, victimIndex);
 
 	updateWriteStats(false);
 
 	return evictedAddr;
-}
-
-Address LevelCache::writeBack(Address addr) { //needs to return either an addr other than the current one or g_invalidAddress
-	return 0;
 }
 
 int LevelCache::findInSet(const DecodedAddress& dAddr) const {
@@ -89,6 +83,7 @@ int LevelCache::findInSet(const DecodedAddress& dAddr) const {
 	//not found in cache
 	return -1;
 }
+
 
 int LevelCache::getVictimLRU(Address set) const {
 	// Find the way with the maximum LRU value in the set
@@ -122,21 +117,13 @@ Address LevelCache::handleCacheEviction(const DecodedAddress& dAddr, int victimI
 	Address evictedAddr = cache_[cacheIndex];
 
 	cache_[cacheIndex] = newAddr;
-	extraBits_[cacheIndex] |= bitMasks_.validBits_;
+	setValid(dAddr.set, victimIndex);
 
 	if (isDirtyBlock(cacheIndex)) {
 		return evictedAddr; 
 	}
 
 	return newAddr;
-}
-
-bool LevelCache::isDirtyBlock(int cacheIndex) const {
-	return extraBits_[cacheIndex] & bitMasks_.dirtyBits_;
-}
-
-bool LevelCache::isValidBlock(int cacheIndex) const {
-	return extraBits_[cacheIndex] & bitMasks_.validBits_;
 }
 
 LevelCache::DecodedAddress LevelCache::decodeAddress(Address addr) const {
@@ -150,14 +137,28 @@ LevelCache::DecodedAddress LevelCache::decodeAddress(Address addr) const {
 	return { tag, setIndex };
 }
 
-void LevelCache::updateDirty(int set, int way) {
-	extraBits_[set + way] ^= bitMasks_.dirtyBits_;
-}
-
 void LevelCache::updateReadStats(bool hit) { // [TODO]
 	if (hit) {
 		stats_.hits_++;
 	} else {
+		stats_.misses_++;
+	}
+}
+
+void LevelCache::updateWriteStats(bool hit) { // [TODO]
+	if (hit) {
+		stats_.hits_++;
+	}
+	else {
+		stats_.misses_++;
+	}
+}
+
+void LevelCache::updateWriteBackStats(bool hit) { // [TODO]
+	if (hit) {
+		stats_.hits_++;
+	}
+	else {
 		stats_.misses_++;
 	}
 }
@@ -167,3 +168,26 @@ Address LevelCache::makeMask(int start, int length) const{
 	if (start + length >= sizeof(Address) * 8) return ~0UL << start;
 	return ((1UL << length) - 1) << start;
 }
+
+//Asccessor and Mutator Functions for dirty and valid bits
+bool LevelCache::isDirtyBlock(int cacheIndex) const {
+	return extraBits_[cacheIndex] & bitMasks_.dirtyBits_;
+}
+
+void LevelCache::setDirty(int set, int way) {
+	extraBits_[set + way] |= bitMasks_.dirtyBits_;
+}
+
+void LevelCache::clearDirty(int set, int way) {
+	extraBits_[set + way] &= ~bitMasks_.dirtyBits_;
+}
+
+bool LevelCache::isValidBlock(int cacheIndex) const {
+	return extraBits_[cacheIndex] & bitMasks_.validBits_;
+}
+
+void LevelCache::setValid(int set, int way) {
+	extraBits_[set + way] |= bitMasks_.validBits_;
+}
+// ------------------------------------------------------
+
