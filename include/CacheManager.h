@@ -14,12 +14,11 @@
 class CacheManager {
 public:
     CacheManager(const SystemCacheParams& systemCacheParams);
-	~CacheManager();
 
     void read(Address addr);
 	void write(Address addr);
 
-    void printStats();
+    void printStats() const;
 private:
     bool isCacheHit(Address result) const;
 

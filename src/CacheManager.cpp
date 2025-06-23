@@ -6,13 +6,11 @@ CacheManager::CacheManager(const SystemCacheParams& params){
         caches_.emplace_back(LevelCache(cacheParam));
     }
 
-    // Initialize victim caches
-    for (const CacheParams& cacheParam : params.vCaches_) {
-        vCaches_.emplace_back(VictimCache(cacheParam));
-    }
+    //// Initialize victim caches
+    //for (const CacheParams& cacheParam : params.vCaches_) {
+    //    vCaches_.emplace_back(VictimCache(cacheParam));
+    //}
 }
-
-CacheManager::~CacheManager() = default;
 
 void CacheManager::read(Address addr) {
     Address writeBack = caches_[0].read(addr);
@@ -45,6 +43,9 @@ void CacheManager::write(Address addr) {
 }
 
 void CacheManager::handleLevelWriteBack(Address writeBack, std::size_t level) {
+    if (level > 0)
+	    caches_[level - 1].stats_.writeBacks_++;
+
     if (level >= caches_.size()) return;
 
     Address nextEvicted = caches_[level].write(writeBack);
@@ -67,6 +68,14 @@ void CacheManager::handleVictimWriteBack(Address writeBack, std::size_t level) {
 
 bool CacheManager::isCacheHit(Address writeBack) const {
     return writeBack == g_invalidAddress;
+}
+
+void CacheManager::printStats() const {
+    for (std::size_t i = 0; i < caches_.size(); ++i) {
+        std::cout << "Cache Level " << i + 1 << " Stats:\n";
+        caches_[i].printStats();
+        std::cout << "\n";
+    }
 }
 
 
