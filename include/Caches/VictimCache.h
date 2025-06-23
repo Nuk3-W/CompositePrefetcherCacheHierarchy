@@ -1,15 +1,14 @@
 #ifndef VICTIM_CACHE_H
 #define VICTIM_CACHE_H
 
-#include "LevelCache.h"
-#include "CacheData.h"
-
-class VictimCache : public LevelCache {
+class VictimCache : public BaseCache {
 public:
-    VictimCache(const CacheParams& params);
+	VictimCache(const CacheParams& params);
+	~VictimCache() = default;
 
-private:
-    bool valid{};
+	Address read(Address addr);
+	Address write(Address addr);
+	void printStats() const;
 };
 
 #endif // VICTIM_CACHE_H
