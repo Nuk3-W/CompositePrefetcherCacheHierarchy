@@ -1,15 +1,9 @@
 #include "CacheManager.h"
 
 CacheManager::CacheManager(const SystemCacheParams& params){
-    // Initialize normal caches
-    for (const CacheParams& cacheParam : params.caches_) {
-        caches_.emplace_back(LevelCache(cacheParam));
+    for (std::size_t i = 0; i < params.caches_.size(); ++i){
+		caches_.emplace_back(params.caches_[i], params.vCaches_[i]);
     }
-
-    //// Initialize victim caches
-    //for (const CacheParams& cacheParam : params.vCaches_) {
-    //    vCaches_.emplace_back(VictimCache(cacheParam));
-    //}
 }
 
 void CacheManager::read(Address addr) {

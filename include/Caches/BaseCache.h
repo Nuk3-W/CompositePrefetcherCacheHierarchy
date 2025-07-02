@@ -25,19 +25,20 @@ public:
 	void printStats() const;
 protected:
 	struct DecodedAddress;
+	struct CacheBlock;
 	DecodedAddress decodeAddress(Address addr) const;
 
 	int getVictimLRU(Address set) const;
 	void updateLRU(int set, int way);
 
-	bool isValidBlock(int cacheIndex) const;
-	void setValid(int set, int way);
+	bool isValidBlock(const CacheBlock& block) const;
+	void setValid(CacheBlock& block);
 
-	bool isDirtyBlock(int cacheIndex) const;
-	void setDirty(int set, int way);
-	void clearDirty(int set, int way);
+	bool isDirtyBlock(const CacheBlock& block) const;
+	void setDirty(CacheBlock& block);
+	void clearDirty(CacheBlock& block);
 
-	Address handleCacheEviction(const DecodedAddress& dAddr, int victimIndex, Address newAddr);
+	Address handleCacheEviction(CacheBlock&, Address newAddr);
 	int findInSet(const DecodedAddress& dAddr) const;
 
 	void updateReadStats(bool hit);
@@ -62,13 +63,18 @@ protected:
 		Address set;
 	};
 
+	struct CacheBlock {
+		Address addr_{};
+		uint32_t extraBits_{};
+	};
+
 	BitMasks bitMasks_{};
 
 	CacheParams params_{};
 	CacheStats stats_{};
 
 	// address and metadata storage
-	std::vector<Address> cache_{};
-	std::vector<uint32_t> extraBits_{};
+	std::vector<CacheBlock> cache_{};
+
 };
 #endif // BaseCache_H

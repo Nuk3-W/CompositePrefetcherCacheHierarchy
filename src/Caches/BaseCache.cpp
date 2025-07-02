@@ -3,8 +3,7 @@
 BaseCache::BaseCache(const CacheParams& params) :
 	params_(params),
 	stats_ (),
-	cache_ (params_.sets_* params_.assoc_),
-	extraBits_ (params_.sets_* params_.assoc_) {
+	cache_ (params_.sets_* params_.assoc_) {
 	//cache address bits initialization
 	int blockBits = std::log2(params_.blockSize_);
 	int setBits = std::log2(params_.sets_);
@@ -39,9 +38,9 @@ int BaseCache::findInSet(const DecodedAddress& dAddr) const {
 		int cacheIndex = dAddr.set + i;
 
 		// skip invalid blocks
-		if (!isValidBlock(cacheIndex)) continue;
+		if (!isValidBlock(cache_[cacheIndex])) continue;
 
-		Address cacheTag = cache_[cacheIndex] & bitMasks_.tagBits_;
+		Address cacheTag = cache_[cacheIndex].addr_ & bitMasks_.tagBits_;
 		if (cacheTag == dAddr.tag) return i;
 
 		//std::cout << "debug in findInSet" << std::endl;
@@ -56,9 +55,9 @@ int BaseCache::getVictimLRU(Address set) const {
 	std::pair<int, int> maxLRUWay = { 0, 0 };
 	// Initialize with the first way's LRU value 
 	for (int i = 0; i < params_.assoc_; ++i) {
-		Address cacheLRU = extraBits_[set + i] & bitMasks_.lruBits_;
+		Address cacheLRU = cache_[set + i].extraBits_ & bitMasks_.lruBits_;
 		// check if the current way has a higher LRU value or if invalid because they are used first
-		if (!isValidBlock(set + i)){
+		if (!isValidBlock(cache_[set + i])){
 			return i;
 		}
 		else if (cacheLRU > maxLRUWay.second) {
@@ -69,26 +68,25 @@ int BaseCache::getVictimLRU(Address set) const {
 }
 
 void BaseCache::updateLRU(int set, int way) {
-	Address checkLRU = extraBits_[set + way] & bitMasks_.lruBits_;
+	Address checkLRU = cache_[set + way].extraBits_ & bitMasks_.lruBits_;
 
 	for (int i = 0; i < params_.assoc_; ++i) {
-		Address currentLRU = extraBits_[set + i] & bitMasks_.lruBits_;
+		Address currentLRU = cache_[set + i].extraBits_ & bitMasks_.lruBits_;
 		// increment LRU for all blocks with lower LRU value than current
-		if (currentLRU <= checkLRU && currentLRU < bitMasks_.lruBits_) extraBits_[set + i] += 1;
+		if (currentLRU <= checkLRU && currentLRU < bitMasks_.lruBits_) cache_[set + i].extraBits_ += 1;
 	}
 	// reset the use block to 0
-	extraBits_[set + way] &= ~bitMasks_.lruBits_;
+	cache_[set + way].extraBits_ &= ~bitMasks_.lruBits_;
 }
 
-Address BaseCache::handleCacheEviction(const DecodedAddress& dAddr, int victimIndex, Address newAddr) {
-	int cacheIndex = dAddr.set + victimIndex;
+Address BaseCache::handleCacheEviction(CacheBlock& block, Address newAddr) {
 
-	Address evictedAddr = cache_[cacheIndex];
+	Address evictedAddr = block.addr_;
 
-	cache_[cacheIndex] = newAddr;
-	setValid(dAddr.set, victimIndex);
+	//cache_[cacheIndex].addr_ = newAddr;
+	setValid(block);
 
-	if (isDirtyBlock(cacheIndex)) {
+	if (isDirtyBlock(block)) {
 		return evictedAddr;
 	}
 
@@ -134,24 +132,24 @@ Address BaseCache::makeMask(int start, int length) const {
 }
 
 //Asccessor and Mutator Functions for dirty and valid bits
-bool BaseCache::isDirtyBlock(int cacheIndex) const {
-	return extraBits_[cacheIndex] & bitMasks_.dirtyBits_;
+bool BaseCache::isDirtyBlock(const CacheBlock& block) const {
+	return block.extraBits_ & bitMasks_.dirtyBits_;
 }
 
-void BaseCache::setDirty(int set, int way) {
-	extraBits_[set + way] |= bitMasks_.dirtyBits_;
+void BaseCache::setDirty(CacheBlock& block) {
+	block.extraBits_ |= bitMasks_.dirtyBits_;
 }
 
-void BaseCache::clearDirty(int set, int way) {
-	extraBits_[set + way] &= ~bitMasks_.dirtyBits_;
+void BaseCache::clearDirty(CacheBlock& block) {
+	block.extraBits_ &= ~bitMasks_.dirtyBits_;
 }
 
-bool BaseCache::isValidBlock(int cacheIndex) const {
-	return extraBits_[cacheIndex] & bitMasks_.validBits_;
+bool BaseCache::isValidBlock(const CacheBlock& block) const {
+	return block.extraBits_ & bitMasks_.validBits_;
 }
 
-void BaseCache::setValid(int set, int way) {
-	extraBits_[set + way] |= bitMasks_.validBits_;
+void BaseCache::setValid(CacheBlock& block) {
+	block.extraBits_ |= bitMasks_.validBits_;
 }
 // ------------------------------------------------------
 
