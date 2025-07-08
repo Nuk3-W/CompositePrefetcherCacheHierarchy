@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <array>
+#include <functional>
 
 #include "Caches/LevelCache.h"
 #include "Caches/CacheData.h"
@@ -21,9 +22,10 @@ public:
     void printStats() const;
 private:
     bool isCacheHit(Address result) const;
+    void access(Address addr, std::function<Address(BaseCache&, Address)> accessFunc);
+    
 
     void handleLevelWriteBack(Address writeBack, std::size_t level);
-    void handleVictimWriteBack(Address writeBack, std::size_t level);
 
     std::vector<LevelCache> caches_;
     std::vector<VictimCache> vCaches_; //this is configureable to allow for more than just L1 victim cache 

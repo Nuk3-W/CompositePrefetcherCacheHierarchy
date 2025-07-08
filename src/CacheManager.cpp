@@ -7,33 +7,28 @@ CacheManager::CacheManager(const SystemCacheParams& params){
 }
 
 void CacheManager::read(Address addr) {
-    Address writeBack = caches_[0].read(addr);
-    if (isCacheHit(writeBack)) return;
-
-    for (std::size_t level = 1; level < caches_.size(); ++level) {
-        if (writeBack != addr)
-		    handleLevelWriteBack(writeBack, level); 
-
-        writeBack = caches_[level].read(addr); 
-
-        if (isCacheHit(writeBack)) return;
-    } 
+    access(addr, [](BaseCache& cache, Address a) {
+        return cache.read(a);
+    });
 }
 
 void CacheManager::write(Address addr) {
-	//because we dont want to write all the way down to memory we only need one write call
-    Address writeBack = caches_[0].write(addr); 
+    access(addr, [](BaseCache& cache, Address a) {
+        return cache.write(a);
+    });
+}
+
+void CacheManager::access(Address addr, std::function<Address(BaseCache&, Address)> accessFunc) {
+    Address writeBack = accessFunc(caches_[0], addr);
     if (isCacheHit(writeBack)) return;
 
     for (std::size_t level = 1; level < caches_.size(); ++level) {
-        // we dont check for hit because we would already return by now
         if (writeBack != addr)
-            handleLevelWriteBack(writeBack, level); 
-		// read every other cache to pull up the correct block if needed
-        writeBack = caches_[level].read(addr); 
+            handleLevelWriteBack(writeBack, level);
 
-        if (isCacheHit(writeBack)) return; 
-    } 
+        writeBack = caches_[level].read(addr);
+        if (isCacheHit(writeBack)) return;
+    }
 }
 
 void CacheManager::handleLevelWriteBack(Address writeBack, std::size_t level) {
@@ -55,9 +50,6 @@ void CacheManager::handleLevelWriteBack(Address writeBack, std::size_t level) {
         writeBack = caches_[i].read(writeBack);
 		if (isCacheHit(writeBack)) return;
     }
-}
-
-void CacheManager::handleVictimWriteBack(Address writeBack, std::size_t level) {
 }
 
 bool CacheManager::isCacheHit(Address writeBack) const {
