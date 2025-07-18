@@ -53,7 +53,7 @@ void CacheManager::handleLevelWriteBack(Address writeBack, std::size_t level) {
 }
 
 bool CacheManager::isCacheHit(Address writeBack) const {
-    return writeBack == g_invalidAddress;
+    return writeBack == g_cacheHitAddress;
 }
 
 void CacheManager::printStats() const {

@@ -18,7 +18,7 @@ Address LevelCache::access(Address addr, AccessType type) {
 			updateReadStats(true);
 		}
 		updateLRU(setIndex, *hitWay);
-		return g_invalidAddress;
+		return g_cacheHitAddress;
 	}
 
 	int victimIndex = getVictimLRU(setIndex);
@@ -52,7 +52,7 @@ Address LevelCache::write(Address addr) {
 Address LevelCache::handleVictim(CacheBlock& evict, Address addr) {
 	Address victimBlock = victimCache_->read(addr);
 	BaseCache::CacheBlock& swapEvict = victimCache_->write(evict.addr_, static_cast<bool>( evict.extraBits_ & bitMasks_.dirtyBits_ ));
-	if (victimBlock == g_invalidAddress) {
+	if (victimBlock == g_cacheHitAddress) {
 		evict.addr_ = swapEvict.addr_;
 	} else if (victimBlock == addr) {
 		// No-op for now
