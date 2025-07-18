@@ -6,6 +6,7 @@
 #include <iostream>
 #include <bitset>
 #include <iomanip>
+#include <optional>
 
 #include "CacheData.h"
 
@@ -24,9 +25,7 @@ public:
 	Address write(Address addr);
 	void printStats() const;
 protected:
-	struct DecodedAddress;
 	struct CacheBlock;
-	DecodedAddress decodeAddress(Address addr) const;
 
 	int getVictimLRU(Address set) const;
 	void updateLRU(int set, int way);
@@ -39,7 +38,6 @@ protected:
 	void clearDirty(CacheBlock& block);
 
 	Address handleCacheEviction(CacheBlock&, Address newAddr);
-	int findInSet(const DecodedAddress& dAddr) const;
 
 	void updateReadStats(bool hit);
 	void updateWriteStats(bool hit);
@@ -58,11 +56,6 @@ protected:
 		Address dirtyBits_;
 	};
 
-	struct DecodedAddress {
-		Address tag;
-		Address set;
-	};
-
 	struct CacheBlock {
 		Address addr_{};
 		uint32_t extraBits_{};
@@ -76,5 +69,6 @@ protected:
 	// address and metadata storage
 	std::vector<CacheBlock> cache_{};
 
+	std::optional<int> findHitWay(Address addr, Address& setIndex) const;
 };
 #endif // BaseCache_H

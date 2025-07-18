@@ -7,6 +7,7 @@
 #include <cmath>
 #include <bitset>
 #include <iomanip>
+#include <optional>
 
 #include "BaseCache.h"
 #include "VictimCache.h"
@@ -19,10 +20,12 @@ public:
 	LevelCache(const CacheParams& params, const CacheParams& vParams);
 	~LevelCache() = default;
 
-	Address read(Address addr); 
+	Address read(Address addr);
 	Address write(Address addr);
 	void printStats() const;
-protected:
+private:
+	enum class AccessType { Read, Write };
+	Address access(Address addr, AccessType type);
 	Address handleVictim(CacheBlock& evict, Address addr);
 	std::optional<VictimCache> victimCache_;
 };

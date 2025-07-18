@@ -1,4 +1,5 @@
 #include "Caches/BaseCache.h"
+#include <optional>
 
 BaseCache::BaseCache(const CacheParams& params) :
 	params_(params),
@@ -33,21 +34,7 @@ BaseCache::BaseCache(const CacheParams& params) :
 	printMask("Dirty", lruBits + validBits, dirtyBits, bitMasks_.dirtyBits_);
 }
 
-int BaseCache::findInSet(const DecodedAddress& dAddr) const {
-	for (int i = 0; i < params_.assoc_; ++i){
-		int cacheIndex = dAddr.set + i;
-
-		// skip invalid blocks
-		if (!isValidBlock(cache_[cacheIndex])) continue;
-
-		Address cacheTag = cache_[cacheIndex].addr_ & bitMasks_.tagBits_;
-		if (cacheTag == dAddr.tag) return i;
-
-		//std::cout << "debug in findInSet" << std::endl;
-	}
-	//not found in cache
-	return -1;
-}
+// Removed findInSet implementation; replaced by findHitWay
 
 
 int BaseCache::getVictimLRU(Address set) const {
@@ -91,17 +78,6 @@ Address BaseCache::handleCacheEviction(CacheBlock& block, Address newAddr) {
 	}
 
 	return newAddr;
-}
-
-BaseCache::DecodedAddress BaseCache::decodeAddress(Address addr) const {
-	// Extract set bits and shift by block offset to get set index
-	Address setIndex = ( addr & bitMasks_.setBits_ ) >> static_cast< Address >( std::log2(params_.blockSize_) );
-	// Multiply by assoc_ to get base index in 1D vector
-	setIndex *= params_.assoc_;
-	// Extract tag bits
-	Address tag = addr & bitMasks_.tagBits_;
-
-	return { tag, setIndex };
 }
 
 void BaseCache::checkHit(bool hit) {
@@ -160,6 +136,19 @@ void BaseCache::printMask(const std::string& label, int start, int length, unsig
 		<< " Hex: 0x" << std::hex << std::setw(16) << mask
 		<< "  Bin: " << std::bitset<32>(mask)
 		<< std::dec << '\n';
+}
+
+std::optional<int> BaseCache::findHitWay(Address addr, Address& setIndex) const {
+	int blockBits = std::log2(params_.blockSize_);
+	setIndex = ((addr & bitMasks_.setBits_) >> blockBits) * params_.assoc_;
+	Address tag = addr & bitMasks_.tagBits_;
+	for (int i = 0; i < params_.assoc_; ++i) {
+		int cacheIndex = setIndex + i;
+		if (!isValidBlock(cache_[cacheIndex])) continue;
+		Address cacheTag = cache_[cacheIndex].addr_ & bitMasks_.tagBits_;
+		if (cacheTag == tag) return i;
+	}
+	return std::nullopt;
 }
 
 

@@ -7,18 +7,18 @@ CacheManager::CacheManager(const SystemCacheParams& params){
 }
 
 void CacheManager::read(Address addr) {
-    access(addr, [](BaseCache& cache, Address a) {
+    access(addr, [](LevelCache& cache, Address a) {
         return cache.read(a);
     });
 }
 
 void CacheManager::write(Address addr) {
-    access(addr, [](BaseCache& cache, Address a) {
+    access(addr, [](LevelCache& cache, Address a) {
         return cache.write(a);
     });
 }
 
-void CacheManager::access(Address addr, std::function<Address(BaseCache&, Address)> accessFunc) {
+void CacheManager::access(Address addr, std::function<Address(LevelCache&, Address)> accessFunc) {
     Address writeBack = accessFunc(caches_[0], addr);
     if (isCacheHit(writeBack)) return;
 

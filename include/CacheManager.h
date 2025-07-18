@@ -22,7 +22,7 @@ public:
     void printStats() const;
 private:
     bool isCacheHit(Address result) const;
-    void access(Address addr, std::function<Address(BaseCache&, Address)> accessFunc);
+    void access(Address addr, std::function<Address(LevelCache&, Address)> accessFunc);
     
 
     void handleLevelWriteBack(Address writeBack, std::size_t level);

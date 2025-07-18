@@ -56,3 +56,30 @@ PF1.Assign(NULL, &GHB1, &IndexTable, NULL, &PrefetchController);
 ## Notes
 
 An executable version of the file is contained in the files if you are, for some reason, too lazy to compile the main sim_cache.cc file.
+
+## Building with CMake (Cross-Platform)
+
+You can build this project using CMake from the command line on Windows, Linux, or macOS. Make sure you have CMake and a C++17-compatible compiler installed.
+
+### Steps:
+
+```sh
+# 1. Create a build directory
+mkdir build
+cd build
+
+# 2. Generate build files (use your preferred generator, e.g., Ninja or Makefiles)
+cmake ..
+
+# 3. Build the project
+cmake --build .
+
+# 4. Run the main simulator (example)
+./CacheSim
+
+# 5. (Optional) Run the config test
+./test_config
+```
+
+- On Windows, you may need to use `CacheSim.exe` and `test_config.exe` instead.
+- The executables and required `.txt` files will be copied to the build directory after building.

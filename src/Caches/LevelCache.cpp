@@ -5,65 +5,48 @@ LevelCache::LevelCache(const CacheParams& params, const CacheParams& vParams) :
 	victimCache_(vParams.size_ > 0 ? std::make_optional<VictimCache>(vParams) : std::nullopt)
 {}
 
-Address LevelCache::read(Address addr) { 
-	DecodedAddress dAddr = decodeAddress(addr);
+// Removed findHitWay from LevelCache.cpp; now implemented in BaseCache.cpp
 
-	int hitIndex = findInSet(dAddr);
-	if (hitIndex != -1){
-		updateLRU(dAddr.set, hitIndex);
-		updateReadStats(true); 
+Address LevelCache::access(Address addr, AccessType type) {
+	Address setIndex;
+	auto hitWay = findHitWay(addr, setIndex);
+	if (hitWay) {
+		if (type == AccessType::Write) {
+			setDirty(cache_[setIndex + *hitWay]);
+			updateWriteStats(true);
+		} else {
+			updateReadStats(true);
+		}
+		updateLRU(setIndex, *hitWay);
 		return g_invalidAddress;
 	}
 
-	int victimIndex = getVictimLRU(dAddr.set);
-	CacheBlock& victimBlock = cache_[dAddr.set + victimIndex];
-
-	updateLRU(dAddr.set, victimIndex);
+	int victimIndex = getVictimLRU(setIndex);
+	CacheBlock& victimBlock = cache_[setIndex + victimIndex];
 	Address evictedAddr{};
-	if (victimCache_){
-		//evictedAddr = handleVictim(dAddr, victimIndex, addr);
+	if (victimCache_) {
+		evictedAddr = handleVictim(victimBlock, addr); // TODO: update if needed
 	} else {
 		evictedAddr = handleCacheEviction(victimBlock, addr);
 	}
-
-	cache_[dAddr.set + victimIndex].addr_ = addr;
-
-	clearDirty(victimBlock);
-
-	updateReadStats(false);
-
+	cache_[setIndex + victimIndex].addr_ = addr;
+	updateLRU(setIndex, victimIndex);
+	if (type == AccessType::Write) {
+		setDirty(victimBlock);
+		updateWriteStats(false);
+	} else {
+		clearDirty(victimBlock);
+		updateReadStats(false);
+	}
 	return evictedAddr;
 }
 
-Address LevelCache::write(Address addr) { //possible change for more clear code just always reset the dirty bit and let the caller change back the dirty bit so its less for read
-	DecodedAddress dAddr = decodeAddress(addr);
+Address LevelCache::read(Address addr) {
+	return access(addr, AccessType::Read);
+}
 
-	int hitIndex = findInSet(dAddr);
-	if ( hitIndex != -1 ){
-		setDirty(cache_[dAddr.set + hitIndex]);
-		updateLRU(dAddr.set, hitIndex);
-		updateWriteStats(true);
-		return g_invalidAddress;
-	}
-
-	int victimIndex = getVictimLRU(dAddr.set);
-	CacheBlock& victimBlock = cache_[dAddr.set + victimIndex];
-
-	Address evictedAddr;
-	if (victimCache_){
-		evictedAddr = handleVictim(victimBlock, addr);
-	} else {
-		evictedAddr = handleCacheEviction(victimBlock, addr);
-	}
-
-	victimBlock.addr_ = addr;
-
-	updateLRU(dAddr.set, victimIndex);
-	setDirty(victimBlock);
-
-	updateWriteStats(false);
-
-	return evictedAddr;
+Address LevelCache::write(Address addr) {
+	return access(addr, AccessType::Write);
 }
 
 Address LevelCache::handleVictim(CacheBlock& evict, Address addr) {
@@ -72,11 +55,10 @@ Address LevelCache::handleVictim(CacheBlock& evict, Address addr) {
 	if (victimBlock == g_invalidAddress) {
 		evict.addr_ = swapEvict.addr_;
 	} else if (victimBlock == addr) {
-		
+		// No-op for now
 	} else {
-
+		// No-op for now
 	}
-
 	return 0;
 }
 
