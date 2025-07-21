@@ -27,6 +27,8 @@ private:
 	enum class AccessType { Read, Write };
 	Address access(Address addr, AccessType type);
 	Address handleVictim(CacheBlock& evict, Address addr);
+	Address handleHit(Address setIndex, int way, AccessType type);
+	Address handleMiss(Address setIndex, Address addr, AccessType type);
 	std::optional<VictimCache> victimCache_;
 };
 #endif // LevelCache_H
