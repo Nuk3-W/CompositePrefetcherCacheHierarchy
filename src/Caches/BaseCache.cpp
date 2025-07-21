@@ -19,22 +19,12 @@ BaseCache::BaseCache(const CacheParams& params) :
 	printMask("Set", blockBits, setBits, bitMasks_.setBits_);
 	printMask("Tag", blockBits + setBits, tagBits, bitMasks_.tagBits_);
 
-	//metadata bits initialization
-	int lruBits = std::log2(params_.assoc_);
-	int validBits = 1;
-	int dirtyBits = 1;
-
-	bitMasks_.lruBits_ = makeMask(0, lruBits);
-	bitMasks_.validBits_ = makeMask(lruBits, validBits);
-	bitMasks_.dirtyBits_ = makeMask(lruBits + validBits, dirtyBits);
-
-	std::cout << "\n=== Metadata Bit Masks ===\n";
-	printMask("LRU", 0, lruBits, bitMasks_.lruBits_);
-	printMask("Valid", lruBits, validBits, bitMasks_.validBits_);
-	printMask("Dirty", lruBits + validBits, dirtyBits, bitMasks_.dirtyBits_);
+	// Metadata bitmasks are now global, so no need to set them up here
+	std::cout << "\n=== Metadata Bit Masks (Global Layout) ===\n";
+	printMask("LRU", 0, g_reservedLRUBits, g_LRU_MASK);
+	printMask("Valid", g_reservedLRUBits, g_validBits, g_VALID_MASK);
+	printMask("Dirty", g_reservedLRUBits + g_validBits, g_dirtyBits, g_DIRTY_MASK);
 }
-
-// Removed findInSet implementation; replaced by findHitWay
 
 
 int BaseCache::getVictimLRU(Address set) const {
@@ -42,7 +32,7 @@ int BaseCache::getVictimLRU(Address set) const {
 	std::pair<int, int> maxLRUWay = { 0, 0 };
 	// Initialize with the first way's LRU value 
 	for (int i = 0; i < params_.assoc_; ++i) {
-		Address cacheLRU = cache_[set + i].extraBits_ & bitMasks_.lruBits_;
+		Address cacheLRU = cache_[set + i].extraBits_ & g_LRU_MASK;
 		// check if the current way has a higher LRU value or if invalid because they are used first
 		if (!isValidBlock(cache_[set + i])){
 			return i;
@@ -55,29 +45,20 @@ int BaseCache::getVictimLRU(Address set) const {
 }
 
 void BaseCache::updateLRU(int set, int way) {
-	Address checkLRU = cache_[set + way].extraBits_ & bitMasks_.lruBits_;
+	Address checkLRU = cache_[set + way].extraBits_ & g_LRU_MASK;
 
 	for (int i = 0; i < params_.assoc_; ++i) {
-		Address currentLRU = cache_[set + i].extraBits_ & bitMasks_.lruBits_;
+		Address currentLRU = cache_[set + i].extraBits_ & g_LRU_MASK;
 		// increment LRU for all blocks with lower LRU value than current
-		if (currentLRU <= checkLRU && currentLRU < bitMasks_.lruBits_) cache_[set + i].extraBits_ += 1;
+		if (currentLRU <= checkLRU && currentLRU < g_LRU_MASK) cache_[set + i].extraBits_ += 1;
 	}
 	// reset the use block to 0
-	cache_[set + way].extraBits_ &= ~bitMasks_.lruBits_;
+	cache_[set + way].extraBits_ &= ~g_LRU_MASK;
 }
 
-Address BaseCache::handleCacheEviction(CacheBlock& block, Address newAddr) {
-
-	Address evictedAddr = block.addr_;
-
-	//cache_[cacheIndex].addr_ = newAddr;
+Address BaseCache::handleCacheEviction(CacheBlock& block, Address addr) {
 	setValid(block);
-
-	if (isDirtyBlock(block)) {
-		return evictedAddr;
-	}
-
-	return newAddr;
+	return isDirtyBlock(block) ? block.addr_ : addr;
 }
 
 void BaseCache::checkHit(bool hit) {
@@ -109,23 +90,23 @@ Address BaseCache::makeMask(int start, int length) const {
 
 //Asccessor and Mutator Functions for dirty and valid bits
 bool BaseCache::isDirtyBlock(const CacheBlock& block) const {
-	return block.extraBits_ & bitMasks_.dirtyBits_;
+	return block.extraBits_ & g_DIRTY_MASK;
 }
 
 void BaseCache::setDirty(CacheBlock& block) {
-	block.extraBits_ |= bitMasks_.dirtyBits_;
+	block.extraBits_ |= g_DIRTY_MASK;
 }
 
 void BaseCache::clearDirty(CacheBlock& block) {
-	block.extraBits_ &= ~bitMasks_.dirtyBits_;
+	block.extraBits_ &= ~g_DIRTY_MASK;
 }
 
 bool BaseCache::isValidBlock(const CacheBlock& block) const {
-	return block.extraBits_ & bitMasks_.validBits_;
+	return block.extraBits_ & g_VALID_MASK;
 }
 
 void BaseCache::setValid(CacheBlock& block) {
-	block.extraBits_ |= bitMasks_.validBits_;
+	block.extraBits_ |= g_VALID_MASK;
 }
 // ------------------------------------------------------
 
