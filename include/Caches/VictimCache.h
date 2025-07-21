@@ -9,16 +9,14 @@
 
 class VictimCache : public BaseCache {
 public:
-	friend class LevelCache;
 	VictimCache(const CacheParams& params);
 	~VictimCache() = default;
 
-	Address VictimCache::read(Address addr);
-	BaseCache::CacheBlock VictimCache::write(Address addr, bool dirty);
+	Address swapReq(CacheBlock& block, Address addr);
 	void printStats() const;
-
 private:
-	CacheBlock& swap();
+	Address swap(CacheBlock& block, int hitWay, Address setIndex);
+	Address insertBlock(CacheBlock& block, Address setIndex, Address addr);
 };
 
 #endif // VICTIM_CACHE_H

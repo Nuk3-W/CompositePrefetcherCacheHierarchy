@@ -23,23 +23,20 @@ void CacheManager::access(Address addr, std::function<Address(LevelCache&, Addre
     if (isCacheHit(writeBack)) return;
 
     for (std::size_t level = 1; level < caches_.size(); ++level) {
-        if (writeBack != addr)
+        if (writeBack != addr) {
             handleLevelWriteBack(writeBack, level);
-
+        }
+            
         writeBack = caches_[level].read(addr);
         if (isCacheHit(writeBack)) return;
     }
 }
 
 void CacheManager::handleLevelWriteBack(Address writeBack, std::size_t level) {
-    if (level > 0)
-	    caches_[level - 1].stats_.writeBacks_++;
-
     if (level >= caches_.size()) return;
 
     Address nextEvicted = caches_[level].write(writeBack);
 	if (isCacheHit(nextEvicted)) return;
-
 
     if (nextEvicted != writeBack) {
         handleLevelWriteBack(nextEvicted, level + 1);

@@ -29,9 +29,7 @@ private:
 	Address handleVictim(CacheBlock& evict, Address addr);
 	Address handleHit(Address setIndex, int way, AccessType type);
 	Address handleMiss(Address setIndex, Address addr, AccessType type);
-	int allocateVictim(Address setIndex) const;
-	Address bringInBlock(int victimIndex, Address setIndex, Address addr, AccessType type);
+	
 	std::optional<VictimCache> victimCache_;
-	int findInvalidWay(Address setIndex) const;
 };
 #endif // LevelCache_H

@@ -18,29 +18,33 @@ Address LevelCache::handleHit(Address setIndex, int way, AccessType type) {
 }
 
 Address LevelCache::handleMiss(Address setIndex, Address addr, AccessType type) {
-    // allocate a victim block
     int victimIndex = getVictimLRU(setIndex);
     CacheBlock& victimBlock = cache_[setIndex + victimIndex];
 
     Address evictedAddr{};
     // If the victim is valid and we have a victim cache, use the victim cache; if not, do normal eviction
     if (victimCache_ && isValidBlock(victimBlock)) {
+        ++stats_.swapRequests_; // Increment for every swap request
         evictedAddr = handleVictim(victimBlock, addr);
     } else {
+        // If this is the last-level cache, count writebacks here
         evictedAddr = handleCacheEviction(victimBlock, addr);
     }
 
-    // Insert the new block and update stats
+    // Only reach here if VC did not have the block (no swap)
     victimBlock.addr_ = addr;
+    setValid(victimBlock);
     updateLRU(setIndex, victimIndex);
 
-    if (type == AccessType::Write) {
-        setDirty(victimBlock);
-        updateWriteStats(false);
-    } else {
-        clearDirty(victimBlock);
-        updateReadStats(false);
+    type == AccessType::Write ? updateWriteStats(false) : updateReadStats(false);
+    if (type == AccessType::Write) setDirty(victimBlock);
+    if (evictedAddr == g_cacheHitAddress) {
+        stats_.swapHits_++;
+        return evictedAddr;
     }
+
+    if (evictedAddr != addr) stats_.writeBacks_++;
+    if (type == AccessType::Read) clearDirty(victimBlock);
 
     return evictedAddr;
 }
@@ -65,14 +69,19 @@ Address LevelCache::write(Address addr) {
 }
 
 Address LevelCache::handleVictim(CacheBlock& evict, Address addr) {
-    return 0;
+    return victimCache_->swapReq(evict, addr);
 }
 
 void LevelCache::printStats() const {
-	std::cout << "Reads: "        << stats_.reads_     << "\n"
-              << "Read Misses: "  << stats_.readMiss_  << "\n"
-              << "Writes: "       << stats_.writes_    << "\n"
-              << "Write Misses: " << stats_.writeMiss_ << "\n"
-              << "Hits: "         << stats_.hits_      << "\n"
-              << "Misses: "       << stats_.misses_    << "\n";
+    std::cout << "===== Simulation results =====\n";
+    std::cout << "  a. number of reads:          " << std::setw(20) << stats_.reads_ << "\n";
+    std::cout << "  b. number of read misses:    " << std::setw(20) << stats_.readMiss_ << "\n";
+    std::cout << "  c. number of writes:         " << std::setw(20) << stats_.writes_ << "\n";
+    std::cout << "  d. number of write misses:   " << std::setw(20) << stats_.writeMiss_ << "\n";
+    std::cout << "  e. number of swap requests:  " << std::setw(20) << stats_.swapRequests_ << "\n";
+    double swapRate = stats_.reads_ + stats_.writes_ ? static_cast<double>(stats_.swapRequests_) / (stats_.reads_ + stats_.writes_) : 0.0;
+    std::cout << "  f. swap request rate:        " << std::setw(20) << std::fixed << std::setprecision(4) << swapRate << "\n";
+    std::cout << "  g. number of swaps:          " << std::setw(20) << stats_.swapHits_ << "\n";
+    std::cout << "  i. number writebacks:        " << std::setw(20) << stats_.writeBacks_ << "\n";
+    // L2 stats would be printed by the L2 cache's printStats
 }

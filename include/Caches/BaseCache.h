@@ -12,13 +12,13 @@
 
 class CacheManager;
 
-// global metadata bitmasks for all caches
-constexpr int g_reservedLRUBits = 8;
+// Global metadata bitmasks for all caches
+constexpr int g_reservedLruBits = 8;
 constexpr int g_validBits = 1;
 constexpr int g_dirtyBits = 1;
-constexpr Address g_LRU_MASK   = ((1UL << g_reservedLRUBits) - 1) << 0;
-constexpr Address g_VALID_MASK = (1UL << g_reservedLRUBits);
-constexpr Address g_DIRTY_MASK = (1UL << (g_reservedLRUBits + 1));
+constexpr Address g_lruMask   = ((1UL << g_reservedLruBits) - 1) << 0;
+constexpr Address g_validMask = (1UL << g_reservedLruBits);
+constexpr Address g_dirtyMask = (1UL << (g_reservedLruBits + 1));
 
 class BaseCache {
 public:
@@ -26,10 +26,6 @@ public:
 	BaseCache(const CacheParams& params);
 	~BaseCache() = default;
 
-	// I dont want virtual functions here to avoid vtable overhead so I leave undefined for linker errors to act as pure virtuals
-	// and yes the performance loss isn't much but I decided to be strict about it anyways fight me
-	Address read(Address addr);
-	Address write(Address addr);
 	void printStats() const;
 protected:
     struct CacheBlock;
@@ -54,6 +50,8 @@ protected:
     void printMask(const std::string& label, int start, int length, unsigned long mask) const;
     
 	std::optional<int> findHitWay(Address addr, Address& setIndex) const;
+
+    void clearValid(CacheBlock& block);
 
 protected:
     struct CacheBlock {
