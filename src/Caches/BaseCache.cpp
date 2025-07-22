@@ -2,61 +2,75 @@
 #include <optional>
 
 BaseCache::BaseCache(const CacheParams& params) :
-	params_(params),
-	stats_ (),
-	cache_ (params_.sets_* params_.assoc_) {
-	//cache address bits initialization
-	int blockBits = std::log2(params_.blockSize_);
-	int setBits = std::log2(params_.sets_);
-	int tagBits = sizeof(Address) * 8 - ( blockBits + setBits );
+    params_(params),
+    stats_(),
+    cache_(params_.sets_ * params_.assoc_) {
+    
+    // Cache address bits initialization
+    int blockBits = static_cast<int>(std::log2(params_.blockSize_));
+    int setBits   = static_cast<int>(std::log2(params_.sets_));
+    int tagBits   = static_cast<int>(sizeof(Address) * 8 - (blockBits + setBits));
 
-	bitMasks_.offsetBits_ = makeMask(0, blockBits);
-	bitMasks_.setBits_ = makeMask(blockBits, setBits);
-	bitMasks_.tagBits_ = makeMask(blockBits + setBits, tagBits);
-
-	std::cout << "=== Address Bit Masks ===\n";
-	printMask("Offset", 0, blockBits, bitMasks_.offsetBits_);
-	printMask("Set", blockBits, setBits, bitMasks_.setBits_);
-	printMask("Tag", blockBits + setBits, tagBits, bitMasks_.tagBits_);
-
-	// Metadata bitmasks are now global, so no need to set them up here
-	std::cout << "\n=== Metadata Bit Masks (Global Layout) ===\n";
-	printMask("LRU", 0, g_reservedLruBits, g_lruMask);
-	printMask("Valid", g_reservedLruBits, g_validBits, g_validMask);
-	printMask("Dirty", g_reservedLruBits + g_validBits, g_dirtyBits, g_dirtyMask);
+    bitMasks_.offsetBits_ = makeMask(0, blockBits);
+    bitMasks_.setBits_    = makeMask(blockBits, setBits);
+    bitMasks_.tagBits_    = makeMask(blockBits + setBits, tagBits);
 }
 
+std::optional<int> BaseCache::findHitWay(Address addr, Address& setIndex) const {
+    int blockBits = static_cast<int>(std::log2(params_.blockSize_));
+    setIndex = ((addr & bitMasks_.setBits_) >> blockBits) * params_.assoc_;
+    Address tag = addr & bitMasks_.tagBits_;
+    
+    for (std::size_t i = 0; i < params_.assoc_; ++i) {
+        int cacheIndex = static_cast<int>(setIndex + i);
+        if (!isValidBlock(cache_[cacheIndex])) continue;
+        Address cacheTag = cache_[cacheIndex].addr_ & bitMasks_.tagBits_;
+        if (cacheTag == tag) return static_cast<int>(i);
+    }
+    return std::nullopt;
+}
 
 int BaseCache::getVictimLRU(Address set) const {
-	// Find the way with the maximum LRU value in the set
-	std::pair<int, int> maxLRUWay = { 0, 0 };
-	// Initialize with the first way's LRU value 
-	for (int i = 0; i < params_.assoc_; ++i) {
-		Address cacheLRU = cache_[set + i].extraBits_ & g_lruMask;
-		// check if the current way has a higher LRU value or if invalid because they are used first
-		if (!isValidBlock(cache_[set + i])){
-			return i;
-		}
-		else if (cacheLRU > maxLRUWay.second) {
-			maxLRUWay = { i, cacheLRU };
-		}
-	}
-	return maxLRUWay.first;
+    // Track {way_index, lru_counter} for victim selection
+    using WayIndex = int;
+    using LruCounter = uint32_t;
+    auto [wayIndex, lruCounter] = std::pair<WayIndex, LruCounter>{0, 0};
+    
+    for (std::size_t currentWay = 0; currentWay < params_.assoc_; ++currentWay) {
+        const auto& currentBlock = cache_[set + currentWay];
+        
+        // Invalid blocks are always preferred victims
+        if (!isValidBlock(currentBlock)) {
+            return static_cast<int>(currentWay);
+        }
+        
+        // Extract the LRU counter bits from the block's metadata
+        const LruCounter currentLruCounter = static_cast<LruCounter>(currentBlock.extraBits_ & g_lruMask);
+        if (currentLruCounter > lruCounter) {
+            wayIndex = static_cast<int>(currentWay);
+            lruCounter = currentLruCounter;
+        }
+    }
+    
+    return wayIndex;
 }
 
 void BaseCache::updateLRU(int set, int way) {
-	Address checkLRU = cache_[set + way].extraBits_ & g_lruMask;
+    const Address targetLru = cache_[set + way].extraBits_ & g_lruMask;
 
-	for (int i = 0; i < params_.assoc_; ++i) {
-		Address currentLRU = cache_[set + i].extraBits_ & g_lruMask;
-		// increment LRU for all blocks with lower LRU value than current
-		if (currentLRU <= checkLRU && currentLRU < g_lruMask) cache_[set + i].extraBits_ += 1;
-	}
-	// reset the use block to 0
-	cache_[set + way].extraBits_ &= ~g_lruMask;
+    // Increment LRU for all blocks with lower or equal LRU value
+    for (std::size_t wayIndex = 0; wayIndex < params_.assoc_; ++wayIndex) {
+        const Address currentLru = cache_[set + wayIndex].extraBits_ & g_lruMask;
+        if (currentLru <= targetLru && currentLru < g_lruMask) {
+            cache_[set + wayIndex].extraBits_ += 1;
+        }
+    }
+    
+    // Reset the accessed block to most recently used (LRU = 0)
+    cache_[set + way].extraBits_ &= ~g_lruMask;
 }
 
-Address BaseCache::handleCacheEviction(CacheBlock& block, Address addr) {
+Address BaseCache::handleCacheEviction(CacheBlock& block, [[maybe_unused]] Address addr) {
 	setValid(block);
 	return isDirtyBlock(block) ? block.addr_ : addr;
 }
@@ -70,13 +84,13 @@ void BaseCache::checkHit(bool hit) {
 	}
 }
 
-void BaseCache::updateReadStats(bool hit) { // [TODO]
+void BaseCache::updateReadStats(bool hit) { 
 	stats_.reads_++;
 	checkHit(hit);
 	if (!hit) ++stats_.readMiss_;
 }
 
-void BaseCache::updateWriteStats(bool hit) { // [TODO]
+void BaseCache::updateWriteStats(bool hit) { 
 	stats_.writes_++;
 	checkHit(hit);
 	if (!hit) ++stats_.writeMiss_;
@@ -90,27 +104,23 @@ Address BaseCache::makeMask(int start, int length) const {
 
 //Asccessor and Mutator Functions for dirty and valid bits
 bool BaseCache::isDirtyBlock(const CacheBlock& block) const {
-	return block.extraBits_ & g_dirtyMask;
+    return block.extraBits_ & g_dirtyMask;
 }
 
 void BaseCache::setDirty(CacheBlock& block) {
-	block.extraBits_ |= g_dirtyMask;
+    block.extraBits_ |= g_dirtyMask;
 }
 
 void BaseCache::clearDirty(CacheBlock& block) {
-	block.extraBits_ &= ~g_dirtyMask;
+    block.extraBits_ &= ~g_dirtyMask;
 }
 
 bool BaseCache::isValidBlock(const CacheBlock& block) const {
-	return block.extraBits_ & g_validMask;
+    return block.extraBits_ & g_validMask;
 }
 
 void BaseCache::setValid(CacheBlock& block) {
-	block.extraBits_ |= g_validMask;
-}
-
-void BaseCache::clearValid(CacheBlock& block) {
-    block.extraBits_ &= ~g_validMask;
+    block.extraBits_ |= g_validMask;
 }
 // ------------------------------------------------------
 
@@ -123,18 +133,7 @@ void BaseCache::printMask(const std::string& label, int start, int length, unsig
 		<< std::dec << '\n';
 }
 
-std::optional<int> BaseCache::findHitWay(Address addr, Address& setIndex) const {
-	int blockBits = std::log2(params_.blockSize_);
-	setIndex = ((addr & bitMasks_.setBits_) >> blockBits) * params_.assoc_;
-	Address tag = addr & bitMasks_.tagBits_;
-	for (int i = 0; i < params_.assoc_; ++i) {
-		int cacheIndex = setIndex + i;
-		if (!isValidBlock(cache_[cacheIndex])) continue;
-		Address cacheTag = cache_[cacheIndex].addr_ & bitMasks_.tagBits_;
-		if (cacheTag == tag) return i;
-	}
-	return std::nullopt;
-}
+
 
 
 

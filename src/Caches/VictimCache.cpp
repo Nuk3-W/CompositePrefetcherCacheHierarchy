@@ -22,15 +22,19 @@ Address VictimCache::swap(CacheBlock& block, int hitWay, Address setIndex) {
     return g_cacheHitAddress;
 }
 
-// Helper: Insert a block into the victim cache, evicting if necessary
 Address VictimCache::insertBlock(CacheBlock& block, Address setIndex, Address addr) {
     int victimIndex = getVictimLRU(setIndex);
     CacheBlock& victimBlock = cache_[setIndex + victimIndex];
 
+    // Default to the requested address (no eviction to next level)
     Address evictedAddr = addr;
+    
+    // If we're replacing a valid dirty block, it needs to be written back
     if (isValidBlock(victimBlock) && isDirtyBlock(victimBlock)) {
         evictedAddr = victimBlock.addr_;
     }
+    
+    // Copy the block from main cache to victim cache
     victimBlock.addr_ = block.addr_;
     
     if (isDirtyBlock(block)) { 
@@ -47,6 +51,7 @@ Address VictimCache::insertBlock(CacheBlock& block, Address setIndex, Address ad
 Address VictimCache::swapReq(CacheBlock& block, Address addr) {
     Address setIndex = 0;
     std::optional<int> hitWay = findHitWay(addr, setIndex);
+    
     if (hitWay) {
         return swap(block, *hitWay, setIndex);
     }

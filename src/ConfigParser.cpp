@@ -10,7 +10,6 @@
 
 // tested and works
 
-
 void buildMaps(std::unordered_map<std::string, unsigned long>& sizeMap,
                std::unordered_map<std::string, unsigned long>& assocMap,
                std::unordered_map<std::string, unsigned long>& victimMap,
@@ -110,7 +109,7 @@ void loadConfigFromFile(SystemCacheParams& params) {
     // Step 2: Build CacheParams for L1, L2...
 	buildCacheParams(sizeMap, assocMap, victimMap, params);
 
-    // Debug print
+    // Debug print: keeping in for basic config check
     std::cout << "Caches:\n";
     for ( const auto& c : params.caches_ ) {
         std::cout << "Size: " << c.size_ << ", Assoc: " << c.assoc_ << ", Sets: " << c.sets_

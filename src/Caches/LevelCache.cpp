@@ -18,20 +18,21 @@ Address LevelCache::handleHit(Address setIndex, int way, AccessType type) {
 }
 
 Address LevelCache::handleMiss(Address setIndex, Address addr, AccessType type) {
-    int victimIndex = getVictimLRU(setIndex);
+    const int victimIndex = getVictimLRU(setIndex);
     CacheBlock& victimBlock = cache_[setIndex + victimIndex];
 
     Address evictedAddr{};
-    // If the victim is valid and we have a victim cache, use the victim cache; if not, do normal eviction
+    
+    // Check if we have a victim cache and the victim block is valid
     if (victimCache_ && isValidBlock(victimBlock)) {
         ++stats_.swapRequests_; // Increment for every swap request
         evictedAddr = handleVictim(victimBlock, addr);
     } else {
-        // If this is the last-level cache, count writebacks here
+        // No victim cache or invalid block - use normal eviction
         evictedAddr = handleCacheEviction(victimBlock, addr);
     }
 
-    // Only reach here if VC did not have the block (no swap)
+    // Insert the new block into the victim slot
     victimBlock.addr_ = addr;
     setValid(victimBlock);
     updateLRU(setIndex, victimIndex);
@@ -51,8 +52,8 @@ Address LevelCache::handleMiss(Address setIndex, Address addr, AccessType type) 
 
 Address LevelCache::access(Address addr, AccessType type) {
     Address setIndex;
-    // has reference to modify setIndex
-    std::optional<int> hitWay = findHitWay(addr, setIndex);
+    const auto hitWay = findHitWay(addr, setIndex);
+    
     if (hitWay) {
         return handleHit(setIndex, *hitWay, type);
     }

@@ -22,47 +22,47 @@ constexpr Address g_dirtyMask = (1UL << (g_reservedLruBits + 1));
 
 class BaseCache {
 public:
-	// can be defined because all caches must have these params even if victim
-	BaseCache(const CacheParams& params);
-	~BaseCache() = default;
+    BaseCache(const CacheParams& params);
+    ~BaseCache() = default;
 
-	void printStats() const;
+    void printStats() const;
+    
 protected:
     struct CacheBlock;
+
+    std::optional<int> findHitWay(Address addr, Address& setIndex) const;
 
     int getVictimLRU(Address set) const;
     void updateLRU(int set, int way);
     
-	bool isValidBlock(const CacheBlock& block) const;
+    bool isValidBlock(const CacheBlock& block) const;
     void setValid(CacheBlock& block);
     
-	bool isDirtyBlock(const CacheBlock& block) const;
+    bool isDirtyBlock(const CacheBlock& block) const;
     void setDirty(CacheBlock& block);
     void clearDirty(CacheBlock& block);
     
-	Address handleCacheEviction(CacheBlock&, Address newAddr);
+    Address handleCacheEviction(CacheBlock&, Address newAddr);
     
-	void updateReadStats(bool hit);
+    void updateReadStats(bool hit);
     void updateWriteStats(bool hit);
     void checkHit(bool hit);
     
-	Address makeMask(int start, int length) const;
+    Address makeMask(int start, int length) const;
     void printMask(const std::string& label, int start, int length, unsigned long mask) const;
     
-	std::optional<int> findHitWay(Address addr, Address& setIndex) const;
-
-    void clearValid(CacheBlock& block);
-
 protected:
     struct CacheBlock {
         Address addr_{};
         uint32_t extraBits_{};
     };
+    
     struct BitMasks {
         Address tagBits_{};
         Address setBits_{};
         Address offsetBits_{};
     };
+    
     BitMasks bitMasks_{};
     CacheParams params_{};
     CacheStats stats_{};
