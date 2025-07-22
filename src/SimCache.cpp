@@ -20,11 +20,7 @@ int main(int argc, char* argv[]) {
 
 	loadConfigFromFile(params);
 
-    //std::cout << "debug check 1" << std::endl;
-
 	CacheManager cacheManager(params);
-
-    //std::cout << "debug check 2" << std::endl;
 
     std::ifstream trace(params.traceFile_);
     if (!trace.is_open()) {
@@ -32,18 +28,14 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-    //std::cout << "debug check 3" << std::endl;
-
     char op;
     Address addr;
 
     while (trace >> op >> std::hex >> addr) {
         if (op == 'r') {
-            //std::cout << "Read from address: " << std::hex << addr << std::dec << endl;
 			cacheManager.read(addr);
         }
         else if (op == 'w') {\
-            //std::cout << "Write from address: " << std::hex << addr << std::dec << endl;
             cacheManager.write(addr);
         }
         else {
