@@ -1,5 +1,5 @@
-#ifndef VICTIM_CACHE_H
-#define VICTIM_CACHE_H
+#ifndef victimCache_H
+#define victimCache_H
 
 #include <iostream>
 #include <utility>
@@ -19,4 +19,4 @@ private:
 	Address insertBlock(CacheBlock& block, Address setIndex, Address addr);
 };
 
-#endif // VICTIM_CACHE_H
+#endif // victimCache_H

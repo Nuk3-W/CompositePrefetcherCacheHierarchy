@@ -35,7 +35,7 @@ int main(int argc, char* argv[]) {
         if (op == 'r') {
 			cacheManager.read(addr);
         }
-        else if (op == 'w') {\
+        else if (op == 'w') {
             cacheManager.write(addr);
         }
         else {

@@ -61,7 +61,8 @@ void BaseCache::updateLRU(int set, int way) {
     // Increment LRU for all blocks with lower or equal LRU value
     for (std::size_t wayIndex = 0; wayIndex < params_.assoc_; ++wayIndex) {
         const Address currentLru = cache_[set + wayIndex].extraBits_ & g_lruMask;
-        if (currentLru <= targetLru && currentLru < g_lruMask) {
+        // <= instead of < because lrus all start at 0 too lazy to change logic
+        if (currentLru <= targetLru) {
             cache_[set + wayIndex].extraBits_ += 1;
         }
     }
@@ -78,8 +79,7 @@ Address BaseCache::handleCacheEviction(CacheBlock& block, [[maybe_unused]] Addre
 void BaseCache::checkHit(bool hit) {
 	if (hit) {
 		++stats_.hits_;
-	}
-	else {
+	} else {
 		++stats_.misses_;
 	}
 }

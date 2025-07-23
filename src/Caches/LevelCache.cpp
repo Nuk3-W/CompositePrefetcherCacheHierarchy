@@ -38,6 +38,7 @@ Address LevelCache::handleMiss(Address setIndex, Address addr, AccessType type) 
     updateLRU(setIndex, victimIndex);
 
     type == AccessType::Write ? updateWriteStats(false) : updateReadStats(false);
+    // reasoning behind weird control flow is the dirty bit needs to be altered before exit on vc swap
     if (type == AccessType::Write) setDirty(victimBlock);
     if (evictedAddr == g_cacheHitAddress) {
         stats_.swapHits_++;
