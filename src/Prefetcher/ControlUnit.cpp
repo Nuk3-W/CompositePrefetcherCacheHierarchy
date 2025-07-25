@@ -1,15 +1,15 @@
 #include "Prefetcher/ControlUnit.h"
 
-ControlUnit::ControlUnit(const ControlUnitParams& params) : 
+
+ControlUnit::ControlUnit(const ControlUnitParams& params, const unsigned long blockSize) : 
     superBlockTracker_(params.kTrackerSize_),
-    threshold_(params.threshold_),
-    currentPrefetcher_(PrefetcherType::Markov) {
+    currentPrefetcher_(PrefetchType::Sequential),
+    prefetcher_(blockSize) {
     
-    // Initialize superblock mask for extracting superblock address
-    uint32_t superBlockBits = params.superBlockBits_;
-    if (superBlockBits == 0) superBlockBits = 12; // Default if not specified
+    const uint32_t blockOffsetBits = static_cast<uint32_t>(std::log2(blockSize));
+    const uint32_t superBlockBits = 32 - blockOffsetBits - params.superBlockBits_;
     
-    superBlockMask_ = (~0UL) << (32 - superBlockBits);
+    superBlockMask_ = (~0UL) << superBlockBits;
     
     // Initialize LRU counters (0 = most recent, kTrackerSize-1 = oldest)
     for (uint32_t i = 0; i < superBlockTracker_.size(); ++i) {
@@ -28,9 +28,8 @@ void ControlUnit::updateTrackerOnAccess(Address currentAddr) {
         ++entry.hitCounter_;
         updateLRU(*foundIndex);
         
-        // Decide prefetcher based on counter vs threshold
         currentPrefetcher_ = (entry.hitCounter_ > threshold_) ? 
-            PrefetcherType::Sequential : PrefetcherType::Markov;
+            PrefetchType::Sequential : PrefetchType::Markov;
     } else {
         // Not found - evict LRU entry and insert new one
         int victimIndex = getVictimLRU();
@@ -43,6 +42,8 @@ void ControlUnit::updateTrackerOnAccess(Address currentAddr) {
 }
 
 void ControlUnit::updateThresholdOnMiss(int markovTotal, int markovHit, int sequentialTotal, int sequentialHit) {
+
+    // [TODO] add ghb data access to this function to offload it from the prefetcher helps seperate concerns
     if (markovTotal == 0 || sequentialTotal == 0) return;
 
     double markovPerc = static_cast<double>(markovHit) / markovTotal;
@@ -101,6 +102,15 @@ void ControlUnit::updateLRU(int accessedIndex) {
     
     // Make accessed entry most recent (LRU = 0)
     superBlockTracker_[accessedIndex].lruCounter_ = 0;
+}
+
+Address ControlUnit::prefetch(Address addr) {
+    return prefetcher_.prefetch(addr, currentPrefetcher_);
+
+}
+
+Address ControlUnit::readPrefetchedAddress() const {
+    return prefetcher_.getPrefetchedAddress();
 }
 
 

@@ -1,5 +1,5 @@
-#ifndef LevelCache_H
-#define LevelCache_H
+#ifndef LEVEL_CACHE_H
+#define LEVEL_CACHE_H
 
 #include <iostream>
 #include <iomanip>
@@ -16,7 +16,6 @@ class CacheManager;
 class LevelCache : public BaseCache {
 public:
     LevelCache(const CacheParams& params, const CacheParams& vParams);
-    ~LevelCache() = default;
 
     Address read(Address addr);
     Address write(Address addr);
@@ -33,4 +32,4 @@ private:
     
     std::optional<VictimCache> victimCache_;
 };
-#endif // LevelCache_H
+#endif // LEVEL_CACHE_H

@@ -22,6 +22,7 @@ int main(int argc, char* argv[]) {
 
 	CacheManager cacheManager(params);
 
+
     std::ifstream trace(params.traceFile_);
     if (!trace.is_open()) {
         cerr << "Error: Could not open file " << params.traceFile_ << endl;

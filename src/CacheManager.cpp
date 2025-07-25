@@ -1,8 +1,10 @@
-#include "CacheManager.h"
+ #include "CacheManager.h"
 
-CacheManager::CacheManager(const SystemCacheParams& params) {
+CacheManager::CacheManager(const SystemCacheParams& params) : 
+    controlUnit_(params.controlUnit_.kTrackerSize_ > 0 ? std::make_optional<ControlUnit>(params.controlUnit_, params.blockSize_) : std::nullopt) {
+    
     for (std::size_t i = 0; i < params.caches_.size(); ++i) {
-		caches_.emplace_back(params.caches_[i], params.vCaches_[i]);
+        caches_.emplace_back(params.caches_[i], params.vCaches_[i]);
     }
 }
 
@@ -19,21 +21,45 @@ void CacheManager::write(Address addr) {
 }
 
 void CacheManager::access(Address addr, std::function<Address(LevelCache&, Address)> accessFunc) {
-    // Try to access the requested address in L1 cache
+    if (controlUnit_) controlUnit_->updateTrackerOnAccess(addr);
+    // First, try to access the requested address in L1 cache
     Address writeBackAddr = accessFunc(caches_[0], addr);
     if (isCacheHit(writeBackAddr)) return;
 
-    // On L1 miss, check successive cache levels
+    if (controlUnit_) {
+        // If prefetcher is enabled, check it on L1 miss this only checks the current thing in stream buffer doesnt prefetch more data 
+        Address prefetchResult = controlUnit_->readPrefetchedAddress();
+        if (isCacheHit(prefetchResult)) {
+            // controlUnit_->updateOnPrefetchHit(...); // implement as needed
+            return;
+        }
+    }
+
+    // add in prefetching data 
+    if (controlUnit_) controlUnit_->updateThresholdOnMiss(0,0,0,0);
+
+    pullFromLowerLevels(addr, writeBackAddr);
+
+    if (controlUnit_) {
+        Address prefetchedAddresses = controlUnit_->prefetch(addr);
+        // prefetcher never has writeback which causes dupe params
+        pullFromLowerLevels(prefetchedAddresses, prefetchedAddresses);
+    }
+}
+
+void CacheManager::pullFromLowerLevels(Address addr, Address writeBackAddr) {
+    
+    // Traverse the cache hierarchy from level 1 onwards
     for (std::size_t level = 1; level < caches_.size(); ++level) {
-        // If L1 evicted a dirty block, write it back to this level
         if (writeBackAddr != addr) {
             handleLevelWriteBack(writeBackAddr, level);
         }
-            
-        // Read the originally requested address from this level
         writeBackAddr = caches_[level].read(addr);
-        if (isCacheHit(writeBackAddr)) return;
+        if (isCacheHit(writeBackAddr)) {
+            return;
+        }
     }
+
 }
 
 void CacheManager::handleLevelWriteBack(Address writeBackAddr, std::size_t level) {

@@ -48,6 +48,10 @@ void buildMaps(std::unordered_map<std::string, unsigned long>& sizeMap,
             unsigned long val;
             iss >> val;
             assocMap[level] = val;
+        } else if ( key == "control_unit_tracker_size" ) {
+            iss >> params.controlUnit_.kTrackerSize_;
+        } else if ( key == "super_block_size" ) {
+            iss >> params.controlUnit_.superBlockBits_;
         }
     }
 }
@@ -102,6 +106,8 @@ void loadConfigFromFile(SystemCacheParams& params) {
     std::unordered_map<std::string, unsigned long> sizeMap;
     std::unordered_map<std::string, unsigned long> assocMap;
     std::unordered_map<std::string, unsigned long> victimMap;
+    
+
 
 	//uses out parameters for maps
 	buildMaps(sizeMap, assocMap, victimMap, params);
@@ -120,4 +126,8 @@ void loadConfigFromFile(SystemCacheParams& params) {
     for ( const auto& v : params.vCaches_ ) {
         std::cout << "Blocks: " << v.assoc_ << ", Size: " << v.size_ << "\n";
     }
+
+    std::cout << "Control Unit:\n";
+    std::cout << "Tracker Size: " << params.controlUnit_.kTrackerSize_ << "\n";
+    std::cout << "Super Block Bits: " << params.controlUnit_.superBlockBits_ << "\n";
 }

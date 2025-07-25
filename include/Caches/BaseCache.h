@@ -1,5 +1,5 @@
-#ifndef BaseCache_H
-#define BaseCache_H
+#ifndef BASE_CACHE_H
+#define BASE_CACHE_H
 
 #include <vector>
 #include <cmath>
