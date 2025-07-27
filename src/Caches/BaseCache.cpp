@@ -71,9 +71,13 @@ void BaseCache::updateLRU(int set, int way) {
     cache_[set + way].extraBits_ &= ~g_lruMask;
 }
 
-Address BaseCache::handleCacheEviction(CacheBlock& block, [[maybe_unused]] Address addr) {
+AccessResult BaseCache::handleCacheEviction(CacheBlock& block, [[maybe_unused]] Address addr) {
 	setValid(block);
-	return isDirtyBlock(block) ? block.addr_ : addr;
+    if (isDirtyBlock(block)) {
+        return Evict{block.addr_};
+    } else {
+        return Miss{};
+    }
 }
 
 void BaseCache::checkHit(bool hit) {

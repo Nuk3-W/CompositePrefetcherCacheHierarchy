@@ -50,11 +50,21 @@ void ControlUnit::updateThresholdOnMiss(Address missAddr) {
     double sequentialHitRate = calculateRecentHitRate(PrefetchType::Sequential);
     
     if (sequentialHitRate == 0.0) return;
-    double threshHoldMultiplier = markovHitRate / sequentialHitRate;
     
-    threshold_ = threshold_ * threshHoldMultiplier;
-
-    //std::cout << "Threshold: " << threshold_ << std::endl;
+    // Better threshold calculation based on hit rate ratios
+    double markovPerc = markovHitRate;
+    double sequentialPerc = sequentialHitRate;
+    double thresholdMultiplier = markovPerc / sequentialPerc;
+    
+    if (thresholdMultiplier > 1) {
+        thresholdMultiplier = thresholdMultiplier / 10;
+        thresholdMultiplier = 1 + thresholdMultiplier;
+    } else {
+        thresholdMultiplier = thresholdMultiplier / 10;
+        thresholdMultiplier = 1 - thresholdMultiplier;
+    }
+    
+    threshold_ = threshold_ * thresholdMultiplier;
     
     // Keep bounds to avoid extreme values
     if (threshold_ > 511) threshold_ = 511;
@@ -163,7 +173,7 @@ void ControlUnit::updateLRU(int accessedIndex) {
     superBlockTracker_[accessedIndex].lruCounter_ = 0;
 }
 
-Address ControlUnit::prefetch(Address addr) {
+AccessResult ControlUnit::prefetch(Address addr) {
     return prefetcher_.prefetch(addr, currentPrefetcher_);
 }
 

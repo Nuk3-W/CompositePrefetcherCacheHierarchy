@@ -17,18 +17,18 @@ class LevelCache : public BaseCache {
 public:
     LevelCache(const CacheParams& params, const CacheParams& vParams);
 
-    Address read(Address addr);
-    Address write(Address addr);
+    AccessResult read(Address addr);
+    AccessResult write(Address addr);
     void printStats() const;
 
 private:
     enum class AccessType { Read, Write };
     
-    Address access(Address addr, AccessType type);
-    Address handleHit(Address setIndex, int way, AccessType type);
-    Address handleMiss(Address setIndex, Address addr, AccessType type);
+    AccessResult access(Address addr, AccessType type);
+    AccessResult handleHit(Address setIndex, int way, AccessType type);
+    AccessResult handleMiss(Address setIndex, Address addr, AccessType type);
     
-    Address handleVictim(CacheBlock& evict, Address addr);
+    AccessResult handleVictim(CacheBlock& evict, Address addr);
     
     std::optional<VictimCache> victimCache_;
 };

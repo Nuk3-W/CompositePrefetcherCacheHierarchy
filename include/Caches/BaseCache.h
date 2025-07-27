@@ -9,6 +9,7 @@
 #include <optional>
 
 #include "CacheData.h"
+#include "SystemCacheData.h"
 
 class CacheManager;
 
@@ -42,7 +43,7 @@ protected:
     void setDirty(CacheBlock& block);
     void clearDirty(CacheBlock& block);
     
-    Address handleCacheEviction(CacheBlock&, Address newAddr);
+    AccessResult handleCacheEviction(CacheBlock&, Address newAddr);
     
     void updateReadStats(bool hit);
     void updateWriteStats(bool hit);

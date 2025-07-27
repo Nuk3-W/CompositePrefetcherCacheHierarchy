@@ -21,11 +21,10 @@ public:
 
     void printStats() const;
 private:
-    bool isCacheHit(Address result) const;
-    void access(Address addr, std::function<Address(LevelCache&, Address)> accessFunc);
+    void access(Address addr, std::function<AccessResult(LevelCache&, Address)> accessFunc);
     
-    void pullFromLowerLevels(Address addr, Address writeBackAddr);
-    void handleLevelWriteBack(Address writeBack, std::size_t level);
+    void pullFromLowerLevels(Address addr, AccessResult writeBackAddr);
+    void handleLevelWriteBack(AccessResult writeBack, std::size_t level);
 
     std::vector<LevelCache> caches_;
     std::optional<ControlUnit> controlUnit_;

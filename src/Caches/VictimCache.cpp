@@ -3,7 +3,7 @@
 VictimCache::VictimCache(const CacheParams& params) : BaseCache(params) {}
 
 // Helper to swap only address, dirty, and valid bits
-Address VictimCache::swap(CacheBlock& block, int hitWay, Address setIndex) {
+AccessResult VictimCache::swap(CacheBlock& block, int hitWay, Address setIndex) {
     CacheBlock& vcBlock = cache_[setIndex + hitWay];
 
     // Swap addresses
@@ -19,19 +19,19 @@ Address VictimCache::swap(CacheBlock& block, int hitWay, Address setIndex) {
     // Update LRU: block X is MRU in main cache, block V is MRU in VC
     updateLRU(setIndex, hitWay);
     ++stats_.swapHits_;
-    return g_cacheHitAddress;
+    return Hit{};
 }
 
-Address VictimCache::insertBlock(CacheBlock& block, Address setIndex, Address addr) {
+AccessResult VictimCache::insertBlock(CacheBlock& block, Address setIndex, Address addr) {
     int victimIndex = getVictimLRU(setIndex);
     CacheBlock& victimBlock = cache_[setIndex + victimIndex];
 
     // Default to the requested address (no eviction to next level)
-    Address evictedAddr = addr;
+    AccessResult evictedAddr = Miss{};
     
     // If we're replacing a valid dirty block, it needs to be written back
     if (isValidBlock(victimBlock) && isDirtyBlock(victimBlock)) {
-        evictedAddr = victimBlock.addr_;
+        evictedAddr = Evict{victimBlock.addr_};
     }
     
     // Copy the block from main cache to victim cache
@@ -48,8 +48,8 @@ Address VictimCache::insertBlock(CacheBlock& block, Address setIndex, Address ad
     return evictedAddr;
 }
 
-Address VictimCache::swapReq(CacheBlock& block, Address addr) {
-    Address setIndex = 0;
+AccessResult VictimCache::swapReq(CacheBlock& block, Address addr) {
+    Address setIndex{};
     std::optional<int> hitWay = findHitWay(addr, setIndex);
     
     if (hitWay) {

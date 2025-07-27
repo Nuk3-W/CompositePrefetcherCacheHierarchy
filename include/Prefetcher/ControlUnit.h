@@ -22,7 +22,7 @@ public:
     void updateTrackerOnAccess(Address currentAddr);
     void updateThresholdOnMiss(Address missAddr);
 
-    Address prefetch(Address addr);
+    AccessResult prefetch(Address addr);
     Address readPrefetchedAddress() const;
     Address getBlockMask() const { return prefetcher_.getBlockMask(); }
 

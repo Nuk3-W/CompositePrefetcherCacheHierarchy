@@ -5,6 +5,7 @@
 #include <string>
 #include <optional>
 #include <cstdint>
+#include <variant>
 
 #include "Caches/CacheData.h"
 
@@ -22,5 +23,12 @@ struct SystemCacheParams {
 
     ControlUnitParams controlUnit_;
 };
+
+struct Hit {};
+struct Miss {};
+struct Evict { Address addr; };
+struct Prefetch { Address addr; };
+
+using AccessResult = std::variant<Hit, Miss, Evict, Prefetch>;
 
 #endif // SYSTEM_CACHE_DATA_H

@@ -5,7 +5,7 @@ LevelCache::LevelCache(const CacheParams& params, const CacheParams& vParams) :
 	victimCache_(vParams.size_ > 0 ? std::make_optional<VictimCache>(vParams) : std::nullopt)
 {}
 
-Address LevelCache::handleHit(Address setIndex, int way, AccessType type) {
+AccessResult LevelCache::handleHit(Address setIndex, int way, AccessType type) {
     if (type == AccessType::Write) {
         setDirty(cache_[setIndex + way]);
         updateWriteStats(true);
@@ -14,14 +14,14 @@ Address LevelCache::handleHit(Address setIndex, int way, AccessType type) {
     }
     
     updateLRU(setIndex, way);
-    return g_cacheHitAddress;
+    return Hit{};
 }
 
-Address LevelCache::handleMiss(Address setIndex, Address addr, AccessType type) {
+AccessResult LevelCache::handleMiss(Address setIndex, Address addr, AccessType type) {
     const int victimIndex = getVictimLRU(setIndex);
     CacheBlock& victimBlock = cache_[setIndex + victimIndex];
 
-    Address evictedAddr{};
+    AccessResult evictedAddr{};
     
     // Check if we have a victim cache and the victim block is valid
     if (victimCache_ && isValidBlock(victimBlock)) {
@@ -40,18 +40,18 @@ Address LevelCache::handleMiss(Address setIndex, Address addr, AccessType type) 
     type == AccessType::Write ? updateWriteStats(false) : updateReadStats(false);
     // reasoning behind weird control flow is the dirty bit needs to be altered before exit on vc swap
     if (type == AccessType::Write) setDirty(victimBlock);
-    if (evictedAddr == g_cacheHitAddress) {
+    if (std::holds_alternative<Hit>(evictedAddr)) {
         stats_.swapHits_++;
         return evictedAddr;
     }
 
-    if (evictedAddr != addr) stats_.writeBacks_++;
+    if (std::holds_alternative<Evict>(evictedAddr)) stats_.writeBacks_++;
     if (type == AccessType::Read) clearDirty(victimBlock);
 
     return evictedAddr;
 }
 
-Address LevelCache::access(Address addr, AccessType type) {
+AccessResult LevelCache::access(Address addr, AccessType type) {
     Address setIndex;
     const auto hitWay = findHitWay(addr, setIndex);
     
@@ -62,15 +62,15 @@ Address LevelCache::access(Address addr, AccessType type) {
     return handleMiss(setIndex, addr, type);
 }
 
-Address LevelCache::read(Address addr) {
+AccessResult LevelCache::read(Address addr) {
 	return access(addr, AccessType::Read);
 }
 
-Address LevelCache::write(Address addr) {
+AccessResult LevelCache::write(Address addr) {
 	return access(addr, AccessType::Write);
 }
 
-Address LevelCache::handleVictim(CacheBlock& evict, Address addr) {
+AccessResult LevelCache::handleVictim(CacheBlock& evict, Address addr) {
     return victimCache_->swapReq(evict, addr);
 }
 

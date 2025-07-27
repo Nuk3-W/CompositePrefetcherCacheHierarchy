@@ -12,11 +12,11 @@ public:
 	VictimCache(const CacheParams& params);
 	~VictimCache() = default;
 
-	Address swapReq(CacheBlock& block, Address addr);
+	AccessResult swapReq(CacheBlock& block, Address addr);
 	void printStats() const;
 private:
-	Address swap(CacheBlock& block, int hitWay, Address setIndex);
-	Address insertBlock(CacheBlock& block, Address setIndex, Address addr);
+	AccessResult swap(CacheBlock& block, int hitWay, Address setIndex);
+	AccessResult insertBlock(CacheBlock& block, Address setIndex, Address addr);
 };
 
 #endif // VICTIM_CACHE_H

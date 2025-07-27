@@ -17,12 +17,12 @@ public:
     Prefetcher(const unsigned long blockSize);
     Prefetcher() = default;
 
-    Address prefetch(Address addr, PrefetchType type);
+    AccessResult prefetch(Address addr, PrefetchType type);
     Address getPrefetchedAddress() const { return currentPrefetchCandidate_; }
     Address getBlockMask() const { return blockMask_; }
 
-    Address seqPrefetch(Address addr);
-    Address markovPrefetch(Address addr);
+    AccessResult seqPrefetch(Address addr);
+    AccessResult markovPrefetch(Address addr);
     void updateGHB(Address addr); 
 
 private:

@@ -20,28 +20,26 @@ void CacheManager::write(Address addr) {
     });
 }
 
-void CacheManager::access(Address addr, std::function<Address(LevelCache&, Address)> accessFunc) {
+
+
+void CacheManager::access(Address addr, std::function<AccessResult(LevelCache&, Address)> accessFunc) {
     if (controlUnit_) controlUnit_->updateTrackerOnAccess(addr);
     
     // First, try to access the requested address in L1 cache
-    Address writeBackAddr = accessFunc(caches_[0], addr);
-    if (isCacheHit(writeBackAddr)) return;
+    AccessResult writeBackAddr = accessFunc(caches_[0], addr);
+    if (std::holds_alternative<Hit>(writeBackAddr)) return;
 
     if (controlUnit_) {
-        // Check if this address was prefetched
         Address prefetchResult = controlUnit_->readPrefetchedAddress();
-        // Compare block addresses, not byte addresses
-        //std::cout << "prefetchResult: " << std::hex << prefetchResult << std::dec << std::endl;
         Address requestedBlock = addr & controlUnit_->getBlockMask();
         if (prefetchResult == requestedBlock) {
             controlUnit_->updateOnHit();
-            Address nextPrefetch = controlUnit_->prefetch(prefetchResult);
-            pullFromLowerLevels(nextPrefetch, nextPrefetch);
+            AccessResult nextPrefetch = controlUnit_->prefetch(prefetchResult);
+            pullFromLowerLevels(std::get<Prefetch>(nextPrefetch).addr, nextPrefetch);
             return;
         }
     }
 
-    //std::cout << "miss\n";
 
     if (controlUnit_) controlUnit_->updateThresholdOnMiss(addr);
 
@@ -49,50 +47,41 @@ void CacheManager::access(Address addr, std::function<Address(LevelCache&, Addre
 
     // Update threshold and generate new prefetch
     if (controlUnit_) {
-        Address prefetchedAddress = controlUnit_->prefetch(addr);
-        //std::cout << "Prefetched address: " << std::hex << prefetchedAddress << std::dec << std::endl;
-        if (prefetchedAddress != ~0UL) {
-            pullFromLowerLevels(prefetchedAddress, prefetchedAddress);
-        }
+        AccessResult prefetchResult = controlUnit_->prefetch(addr);
+        pullFromLowerLevels(std::get<Prefetch>(prefetchResult).addr, prefetchResult);
     }
 }
 
-void CacheManager::pullFromLowerLevels(Address addr, Address writeBackAddr) {
-    
+void CacheManager::pullFromLowerLevels(Address addr, AccessResult writeBackAddr) {
     // Traverse the cache hierarchy from level 1 onwards
     for (std::size_t level = 1; level < caches_.size(); ++level) {
-        if (writeBackAddr != addr) {
+        if (std::holds_alternative<Evict>(writeBackAddr)) {
             handleLevelWriteBack(writeBackAddr, level);
         }
         writeBackAddr = caches_[level].read(addr);
-        if (isCacheHit(writeBackAddr)) {
+        if (std::holds_alternative<Hit>(writeBackAddr)) {
             return;
         }
     }
-
 }
 
-void CacheManager::handleLevelWriteBack(Address writeBackAddr, std::size_t level) {
+void CacheManager::handleLevelWriteBack(AccessResult writeBackAddr, std::size_t level) {
     if (level >= caches_.size()) return;
 
     // Write the evicted block to this cache level
-    Address nextEvictedAddr = caches_[level].write(writeBackAddr);
-    if (isCacheHit(nextEvictedAddr)) return;
+    AccessResult nextEvictedAddr = caches_[level].write(std::get<Evict>(writeBackAddr).addr);
+    if (std::holds_alternative<Hit>(nextEvictedAddr)) return;
 
     // If this level also evicts a block, recursively handle it
-    if (nextEvictedAddr != writeBackAddr) {
+    if (std::holds_alternative<Evict>(nextEvictedAddr)) {
         handleLevelWriteBack(nextEvictedAddr, level + 1);
     }
 
     // Read the original block back through remaining levels to maintain hierarchy
     for (std::size_t i = level + 1; i < caches_.size(); ++i) {
-        writeBackAddr = caches_[i].read(writeBackAddr);
-        if (isCacheHit(writeBackAddr)) return;
+        writeBackAddr = caches_[i].read(std::get<Evict>(writeBackAddr).addr);
+        if (std::holds_alternative<Hit>(writeBackAddr)) return;
     }
-}
-
-bool CacheManager::isCacheHit(Address writeBack) const {
-    return writeBack == g_cacheHitAddress;
 }
 
 void CacheManager::printStats() const {

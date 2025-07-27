@@ -10,20 +10,18 @@ Prefetcher::Prefetcher(const unsigned long blockSize) {
 }
 
 // need to return address so cache hierarchy pulls from lower layers
-Address Prefetcher::prefetch(Address addr, PrefetchType type) {
+AccessResult Prefetcher::prefetch(Address addr, PrefetchType type) {
     return type == PrefetchType::Sequential ? seqPrefetch(addr) : markovPrefetch(addr);
 }
 
-Address Prefetcher::seqPrefetch(Address addr) {
+AccessResult Prefetcher::seqPrefetch(Address addr) {
     Address blockAddr = addr & blockMask_;
-    //std::cout << "Sequential prefetching block address: " << std::hex << blockAddr << std::dec << std::endl;
     Address nextBlockAddr = blockAddr + ~blockMask_ + 1;
-    //std::cout << "Next block address: " << std::hex << nextBlockAddr << std::dec << std::endl;
     currentPrefetchCandidate_ = nextBlockAddr;
-    return currentPrefetchCandidate_;
+    return Prefetch{currentPrefetchCandidate_};
 }
 
-Address Prefetcher::markovPrefetch(Address addr) {
+AccessResult Prefetcher::markovPrefetch(Address addr) {
     Address predictedAddr = ghb_.markovPredictor(addr);
     if (predictedAddr != ~0UL) {
         // Convert to block address like sequential prefetcher
@@ -31,7 +29,7 @@ Address Prefetcher::markovPrefetch(Address addr) {
     } else {
         currentPrefetchCandidate_ = ~0UL;
     }
-    return currentPrefetchCandidate_;
+    return Prefetch{currentPrefetchCandidate_};
 }
 
 void Prefetcher::updateGHB(Address addr) {
