@@ -48,9 +48,9 @@ void buildMaps(std::unordered_map<std::string, unsigned long>& sizeMap,
             unsigned long val;
             iss >> val;
             assocMap[level] = val;
-        } else if ( key == "control_unit_tracker_size" ) {
+        } else if ( key == "control_unit_tracker" ) {
             iss >> params.controlUnit_.kTrackerSize_;
-        } else if ( key == "super_block_size" ) {
+        } else if ( key == "super_block_bits" ) {
             iss >> params.controlUnit_.superBlockBits_;
         }
     }

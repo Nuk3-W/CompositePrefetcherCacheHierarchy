@@ -7,8 +7,8 @@ ControlUnit::ControlUnit(const ControlUnitParams& params, const unsigned long bl
     prefetcher_(blockSize) {
     
     const uint32_t blockOffsetBits = static_cast<uint32_t>(std::log2(blockSize));
-    const uint32_t superBlockBits = 32 - blockOffsetBits - params.superBlockBits_;
-    
+    const uint32_t superBlockBits = blockOffsetBits + params.superBlockBits_;
+
     superBlockMask_ = (~0UL) << superBlockBits;
     
     // Initialize LRU counters (0 = most recent, kTrackerSize-1 = oldest)
@@ -41,26 +41,85 @@ void ControlUnit::updateTrackerOnAccess(Address currentAddr) {
     }
 }
 
-void ControlUnit::updateThresholdOnMiss(int markovTotal, int markovHit, int sequentialTotal, int sequentialHit) {
-
-    // [TODO] add ghb data access to this function to offload it from the prefetcher helps seperate concerns
-    if (markovTotal == 0 || sequentialTotal == 0) return;
-
-    double markovPerc = static_cast<double>(markovHit) / markovTotal;
-    double sequentialPerc = static_cast<double>(sequentialHit) / sequentialTotal;
-    double threshHoldMultiplier = markovPerc / sequentialPerc;
+void ControlUnit::updateThresholdOnMiss(Address missAddr) {
+    prefetcher_.updateGHB(missAddr);
+    updateOnMiss();  // Always track the miss
     
-    // I will be changing the logic here to make it more accurate
-
-    /*
-    current issues are how the life of the program is currently always showing in thrshhold 
-    values so possiblt shortening the memory of the control unit would help
-    or just using some basic dampeners to stop the prominence of old data
-    */
+    // Use recent performance data for threshold calculation (prevents stale data)
+    double markovHitRate = calculateRecentHitRate(PrefetchType::Markov);
+    double sequentialHitRate = calculateRecentHitRate(PrefetchType::Sequential);
+    
+    if (sequentialHitRate == 0.0) return;
+    double threshHoldMultiplier = markovHitRate / sequentialHitRate;
+    
     threshold_ = threshold_ * threshHoldMultiplier;
-    // we need to keep bounds to avoid over fitting to old data if it was prominent
+
+    //std::cout << "Threshold: " << threshold_ << std::endl;
+    
+    // Keep bounds to avoid extreme values
     if (threshold_ > 511) threshold_ = 511;
     if (threshold_ < 1) threshold_ = 1;
+}
+
+void ControlUnit::updateOnHit() {
+    if (currentPrefetcher_ == PrefetchType::Sequential) {
+        ++prefetchStats_.sequentialTotal;
+        ++prefetchStats_.sequentialHits;
+    } else {
+        ++prefetchStats_.markovTotal;
+        ++prefetchStats_.markovHits;
+    }
+    addToQueue(true, currentPrefetcher_);
+}
+
+void ControlUnit::updateOnMiss() {
+    if (currentPrefetcher_ == PrefetchType::Sequential) {
+        ++prefetchStats_.sequentialTotal;
+    } else {
+        ++prefetchStats_.markovTotal;
+    }
+    addToQueue(false, currentPrefetcher_);
+}
+
+void ControlUnit::resetStats() {
+    prefetchStats_ = PrefetchStats{};
+    recentPerformance_.clear();
+}
+
+void ControlUnit::addToQueue(bool isHit, PrefetchType type) {
+    recentPerformance_.push_back({isHit, type});
+    if (recentPerformance_.size() > QUEUE_SIZE) {
+        recentPerformance_.pop_front();
+    }
+}
+
+double ControlUnit::calculateRecentHitRate(PrefetchType type) const {
+    if (recentPerformance_.empty()) return 0.0;
+    
+    int hits = 0;
+    int total = 0;
+    
+    for (const auto& entry : recentPerformance_) {
+        if (entry.second == type) {
+            ++total;
+            if (entry.first) { // isHit
+                ++hits;
+            }
+        }
+    }
+    
+    return total > 0 ? static_cast<double>(hits) / total : 0.0;
+}
+
+void ControlUnit::printQueueStats() const {
+    std::cout << "Recent Performance Queue (" << recentPerformance_.size() << "/" << QUEUE_SIZE << " entries):\n";
+    
+    double markovRate = calculateRecentHitRate(PrefetchType::Markov);
+    double sequentialRate = calculateRecentHitRate(PrefetchType::Sequential);
+    
+    std::cout << "  Markov Hit Rate: " << (markovRate * 100) << "%\n";
+    std::cout << "  Sequential Hit Rate: " << (sequentialRate * 100) << "%\n";
+    std::cout << "  Current Threshold: " << threshold_ << "\n";
 }
 
 
@@ -106,13 +165,33 @@ void ControlUnit::updateLRU(int accessedIndex) {
 
 Address ControlUnit::prefetch(Address addr) {
     return prefetcher_.prefetch(addr, currentPrefetcher_);
-
 }
 
 Address ControlUnit::readPrefetchedAddress() const {
     return prefetcher_.getPrefetchedAddress();
 }
 
+void ControlUnit::printStats() const {
+    std::cout << "=== Global Statistics ===\n";
+    std::cout << "Markov Stats:\n";
+    std::cout << "  Total: " << prefetchStats_.markovTotal << "\n";
+    std::cout << "  Hits: " << prefetchStats_.markovHits << "\n";
+    if (prefetchStats_.markovTotal > 0) {
+        double markovGlobalRate = static_cast<double>(prefetchStats_.markovHits) / prefetchStats_.markovTotal;
+        std::cout << "  Global Hit Rate: " << (markovGlobalRate * 100) << "%\n";
+    }
+    
+    std::cout << "Sequential Stats:\n";
+    std::cout << "  Total: " << prefetchStats_.sequentialTotal << "\n";
+    std::cout << "  Hits: " << prefetchStats_.sequentialHits << "\n";
+    if (prefetchStats_.sequentialTotal > 0) {
+        double sequentialGlobalRate = static_cast<double>(prefetchStats_.sequentialHits) / prefetchStats_.sequentialTotal;
+        std::cout << "  Global Hit Rate: " << (sequentialGlobalRate * 100) << "%\n";
+    }
+    
+    std::cout << "\n=== Recent Performance (Last " << QUEUE_SIZE << " entries) ===\n";
+    printQueueStats();
+}
 
 
 

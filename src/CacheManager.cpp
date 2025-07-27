@@ -22,28 +22,38 @@ void CacheManager::write(Address addr) {
 
 void CacheManager::access(Address addr, std::function<Address(LevelCache&, Address)> accessFunc) {
     if (controlUnit_) controlUnit_->updateTrackerOnAccess(addr);
+    
     // First, try to access the requested address in L1 cache
     Address writeBackAddr = accessFunc(caches_[0], addr);
     if (isCacheHit(writeBackAddr)) return;
 
     if (controlUnit_) {
-        // If prefetcher is enabled, check it on L1 miss this only checks the current thing in stream buffer doesnt prefetch more data 
+        // Check if this address was prefetched
         Address prefetchResult = controlUnit_->readPrefetchedAddress();
-        if (isCacheHit(prefetchResult)) {
-            // controlUnit_->updateOnPrefetchHit(...); // implement as needed
+        // Compare block addresses, not byte addresses
+        //std::cout << "prefetchResult: " << std::hex << prefetchResult << std::dec << std::endl;
+        Address requestedBlock = addr & controlUnit_->getBlockMask();
+        if (prefetchResult == requestedBlock) {
+            controlUnit_->updateOnHit();
+            Address nextPrefetch = controlUnit_->prefetch(prefetchResult);
+            pullFromLowerLevels(nextPrefetch, nextPrefetch);
             return;
         }
     }
 
-    // add in prefetching data 
-    if (controlUnit_) controlUnit_->updateThresholdOnMiss(0,0,0,0);
+    //std::cout << "miss\n";
+
+    if (controlUnit_) controlUnit_->updateThresholdOnMiss(addr);
 
     pullFromLowerLevels(addr, writeBackAddr);
 
+    // Update threshold and generate new prefetch
     if (controlUnit_) {
-        Address prefetchedAddresses = controlUnit_->prefetch(addr);
-        // prefetcher never has writeback which causes dupe params
-        pullFromLowerLevels(prefetchedAddresses, prefetchedAddresses);
+        Address prefetchedAddress = controlUnit_->prefetch(addr);
+        //std::cout << "Prefetched address: " << std::hex << prefetchedAddress << std::dec << std::endl;
+        if (prefetchedAddress != ~0UL) {
+            pullFromLowerLevels(prefetchedAddress, prefetchedAddress);
+        }
     }
 }
 
@@ -89,6 +99,12 @@ void CacheManager::printStats() const {
     for (std::size_t i = 0; i < caches_.size(); ++i) {
         std::cout << "Cache Level " << i + 1 << " Stats:\n";
         caches_[i].printStats();
+        std::cout << "\n";
+    }
+
+    if (controlUnit_) {
+        std::cout << "Control Unit Stats:\n";
+        controlUnit_->printStats();
         std::cout << "\n";
     }
 }

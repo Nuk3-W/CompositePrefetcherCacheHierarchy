@@ -33,6 +33,7 @@ int main(int argc, char* argv[]) {
     Address addr;
 
     while (trace >> op >> std::hex >> addr) {
+        //std::cout << "Processing address: " << std::hex << addr << std::dec << std::endl;
         if (op == 'r') {
 			cacheManager.read(addr);
         }
