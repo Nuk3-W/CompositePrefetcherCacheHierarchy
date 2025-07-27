@@ -4,8 +4,6 @@
 //I aint namespacing this shit
 using Address = unsigned long;
 
-constexpr Address g_cacheHitAddress = 0x00000000UL;
-
 struct CacheParams {
     unsigned long blockSize_;
     unsigned long size_;

@@ -26,7 +26,7 @@ public:
     void updateGHB(Address addr); 
 
 private:
-    Address currentPrefetchCandidate_ { ~g_cacheHitAddress };
+    Address currentPrefetchCandidate_ {};
     uint32_t blockMask_{};
     GHB ghb_{512, 0};
 };
