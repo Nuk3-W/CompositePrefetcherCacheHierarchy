@@ -2,6 +2,7 @@
 
 // Using directives for cleaner code
 using Config::SystemCacheParams;
+using namespace Utils;
 
 CacheManager::CacheManager(const SystemCacheParams& params) : 
     controlUnit_(params.controlUnit_.kTrackerSize_ > 0 ? std::make_optional<ControlUnit>(params.controlUnit_, params.blockSize_) : std::nullopt) {
@@ -23,46 +24,33 @@ void CacheManager::write(Address addr) {
     });
 }
 
-
-
 void CacheManager::access(Address addr, std::function<AccessResult(LevelCache&, Address)> accessFunc) {
     if (controlUnit_) controlUnit_->updateTrackerOnAccess(addr);
     
-    // First, try to access the requested address in L1 cache
     AccessResult writeBackAddr = accessFunc(caches_[0], addr);
-    if (Utils::isType<Hit>(writeBackAddr)) return;
+    if (isType<Hit>(writeBackAddr)) return;
 
     if (controlUnit_) {
-        // turn this read cuntion to restrun AccessResult Prefetch or Miss only
-        AccessResult prefetchResult = controlUnit_->readPrefetchedAddress(addr);
-        if (Utils::isType<Prefetch>(prefetchResult)) {
-            controlUnit_->updateOnHit();
-            AccessResult nextPrefetch = controlUnit_->prefetch(std::get<Prefetch>(prefetchResult).addr);
-            pullFromLowerLevels(std::get<Prefetch>(nextPrefetch).addr, nextPrefetch);
-            return;
-        }
+        AccessResult prefetchResult = checkPrefetch(addr);
+        if (isType<Hit>(prefetchResult)) return;
     }
-
 
     if (controlUnit_) controlUnit_->updateThresholdOnMiss(addr);
 
     pullFromLowerLevels(addr, writeBackAddr);
 
-    // Update threshold and generate new prefetch
-    if (controlUnit_) {
-        AccessResult prefetchResult = controlUnit_->prefetch(addr);
-        pullFromLowerLevels(std::get<Prefetch>(prefetchResult).addr, prefetchResult);
-    }
+    // always prefetch on miss
+    if (controlUnit_) prefetch(addr);
 }
 
 void CacheManager::pullFromLowerLevels(Address addr, AccessResult writeBackAddr) {
     // Traverse the cache hierarchy from level 1 onwards
     for (std::size_t level = 1; level < caches_.size(); ++level) {
-        if (Utils::isType<Evict>(writeBackAddr)) {
+        if (isType<Evict>(writeBackAddr)) {
             handleLevelWriteBack(writeBackAddr, level);
         }
         writeBackAddr = caches_[level].read(addr);
-        if (Utils::isType<Hit>(writeBackAddr)) {
+        if (isType<Hit>(writeBackAddr)) {
             return;
         }
     }
@@ -72,19 +60,35 @@ void CacheManager::handleLevelWriteBack(AccessResult writeBackAddr, std::size_t 
     if (level >= caches_.size()) return;
 
     // Write the evicted block to this cache level
-    AccessResult nextEvictedAddr = caches_[level].write(std::get<Evict>(writeBackAddr).addr);
-    if (Utils::isType<Hit>(nextEvictedAddr)) return;
+    AccessResult nextEvictedAddr = caches_[level].write(getAddress<Evict>(writeBackAddr));
+    if (isType<Hit>(nextEvictedAddr)) return;
 
     // If this level also evicts a block, recursively handle it
-    if (Utils::isType<Evict>(nextEvictedAddr)) {
+    if (isType<Evict>(nextEvictedAddr)) {
         handleLevelWriteBack(nextEvictedAddr, level + 1);
     }
 
     // Read the original block back through remaining levels to maintain hierarchy
     for (std::size_t i = level + 1; i < caches_.size(); ++i) {
-        writeBackAddr = caches_[i].read(std::get<Evict>(writeBackAddr).addr);
-        if (Utils::isType<Hit>(writeBackAddr)) return;
+        writeBackAddr = caches_[i].read(getAddress<Evict>(writeBackAddr));
+        if (isType<Hit>(writeBackAddr)) return;
     }
+}
+
+void CacheManager::prefetch(Address addr) {
+    AccessResult prefetchResult = controlUnit_->prefetch(addr);
+    pullFromLowerLevels(getAddress<Prefetch>(prefetchResult), prefetchResult);
+}
+
+AccessResult CacheManager::checkPrefetch(Address addr) {
+    AccessResult prefetchResult = controlUnit_->readPrefetchedAddress(addr);
+    // a prefetch request here means we hit in the prefetcher and are continuing the prefetch stream
+    if (isType<Prefetch>(prefetchResult)) {
+        controlUnit_->updateOnHit();
+        prefetch(getAddress<Prefetch>(prefetchResult));
+        return Hit{};
+    }
+    return Miss{};
 }
 
 void CacheManager::printStats() const {

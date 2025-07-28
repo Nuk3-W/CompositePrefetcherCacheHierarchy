@@ -8,10 +8,9 @@
 #include "LevelCache.h"
 #include "Config/SystemParams.h"
 #include "ControlUnit.h"
-
-// Using directives for cleaner code
-using Config::SystemCacheParams;
 #include "Utils/VariantUtils.h"
+
+using Config::SystemCacheParams;
 
 class CacheManager {
 public:
@@ -26,6 +25,9 @@ private:
     
     void pullFromLowerLevels(Address addr, AccessResult writeBackAddr);
     void handleLevelWriteBack(AccessResult writeBack, std::size_t level);
+
+    AccessResult checkPrefetch(Address addr);
+    void prefetch(Address addr);
 
     std::vector<LevelCache> caches_;
     std::optional<ControlUnit> controlUnit_;
