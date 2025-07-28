@@ -1,8 +1,7 @@
 #pragma once
 
-#include "Caches/CacheData.h"
+#include "Types.h"
 #include "GHB.h"
-#include "SystemCacheData.h"
 #include <cstdint>
 #include <iostream>
 
@@ -13,7 +12,7 @@ enum class PrefetchType {
 
 class Prefetcher {
 public:
-    Prefetcher(const unsigned long blockSize);
+    Prefetcher(const uint32_t blockSize);
     Prefetcher() = default;
 
     AccessResult prefetch(Address addr, PrefetchType type);

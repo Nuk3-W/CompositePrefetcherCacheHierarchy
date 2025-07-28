@@ -1,4 +1,7 @@
-#include "Caches/LevelCache.h"
+#include "Core/LevelCache.h"
+
+// Using directives for cleaner code
+using Config::CacheParams;
 
 LevelCache::LevelCache(const CacheParams& params, const CacheParams& vParams) :
 	BaseCache(params),

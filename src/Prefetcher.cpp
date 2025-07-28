@@ -1,6 +1,6 @@
-#include "Prefetcher/Prefetcher.h"
+#include "Core/Prefetcher.h"
 
-Prefetcher::Prefetcher(const unsigned long blockSize) {
+Prefetcher::Prefetcher(const uint32_t blockSize) {
     const uint32_t blockSizeMask = static_cast<uint32_t>(log2(blockSize));
     blockMask_ = ~0UL << blockSizeMask;
     //std::cout << "Block mask: " << std::hex << blockMask_ << std::dec << std::endl;

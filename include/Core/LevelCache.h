@@ -9,6 +9,10 @@
 
 #include "BaseCache.h"
 #include "VictimCache.h"
+#include "Config/CacheParams.h"
+
+// Using directives for cleaner code
+using Config::CacheParams;
 
 class CacheManager;
 

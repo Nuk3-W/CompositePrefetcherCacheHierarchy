@@ -5,11 +5,12 @@
 #include <functional>
 #include <optional>
 
-#include "Caches/LevelCache.h"
-#include "Caches/CacheData.h"
-#include "Caches/VictimCache.h"
-#include "Prefetcher/ControlUnit.h"
-#include "SystemCacheData.h"
+#include "LevelCache.h"
+#include "Config/SystemParams.h"
+#include "ControlUnit.h"
+
+// Using directives for cleaner code
+using Config::SystemCacheParams;
 #include "Utils/VariantUtils.h"
 
 class CacheManager {
@@ -28,5 +29,5 @@ private:
 
     std::vector<LevelCache> caches_;
     std::optional<ControlUnit> controlUnit_;
-    unsigned long blockSize_;
+    uint32_t blockSize_;
 };

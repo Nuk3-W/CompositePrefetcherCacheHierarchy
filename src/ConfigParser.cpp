@@ -6,7 +6,11 @@
 #include <vector>
 #include <cmath>
 
-#include "SystemCacheData.h"
+#include "Config/Params.h"
+
+// Using directives for cleaner code
+using Config::CacheParams;
+using Config::SystemCacheParams;
 
 // tested and works
 

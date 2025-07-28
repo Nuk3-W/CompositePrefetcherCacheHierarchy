@@ -10,13 +10,16 @@
 #include <array>
 #include <deque>
 
-#include "Prefetcher/Prefetcher.h"
-#include "SystemCacheData.h"
+#include "Prefetcher.h"
+#include "Types.h"
+#include "Config/PrefetcherParams.h"
 
+// Using directives for cleaner code
+using Config::ControlUnitParams;
 
 class ControlUnit {
 public:
-    ControlUnit(const ControlUnitParams& params, const unsigned long blockSize);
+    ControlUnit(const ControlUnitParams& params, const uint32_t blockSize);
     
     void updateTrackerOnAccess(Address currentAddr);
     void updateThresholdOnMiss(Address missAddr);

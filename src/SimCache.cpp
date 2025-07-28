@@ -4,8 +4,11 @@
 #include <stdexcept>
 #include <limits>
 
-#include "SystemCacheData.h"
-#include "CacheManager.h"
+#include "Config/Params.h"
+#include "Core/CacheManager.h"
+
+// Using directives for cleaner code
+using Config::SystemCacheParams;
 
 void loadConfigFromFile(SystemCacheParams& params);
 

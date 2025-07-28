@@ -1,4 +1,7 @@
-#include "Caches/VictimCache.h"
+#include "Core/VictimCache.h"
+
+// Using directives for cleaner code
+using Config::CacheParams;
 
 VictimCache::VictimCache(const CacheParams& params) : BaseCache(params) {}
 

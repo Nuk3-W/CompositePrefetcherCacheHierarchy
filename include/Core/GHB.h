@@ -10,7 +10,7 @@
 #include <optional>
 #include <iostream>
 
-#include "SystemCacheData.h"
+#include "Types.h"
 
 class GHB {
 public:
@@ -20,7 +20,7 @@ public:
     };
     using ListIt = std::list<GHBEntry>::iterator;
 
-    GHB(size_t bufferSize, unsigned long blockSize);
+    GHB(size_t bufferSize, uint32_t blockSize);
     void insert(Address addr);
     Address markovPredictor(Address missAddress) const;
 

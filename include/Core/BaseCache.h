@@ -7,18 +7,15 @@
 #include <iomanip>
 #include <optional>
 
-#include "CacheData.h"
-#include "SystemCacheData.h"
+#include "Types.h"
+#include "Config/Constants.h"
+#include "Config/CacheParams.h"
+
+// Using directives for cleaner code
+using Config::CacheParams;
+using Config::CacheStats;
 
 class CacheManager;
-
-// Global metadata bitmasks for all caches
-constexpr int g_reservedLruBits = 8;
-constexpr int g_validBits = 1;
-constexpr int g_dirtyBits = 1;
-constexpr Address g_lruMask   = ((1UL << g_reservedLruBits) - 1) << 0;
-constexpr Address g_validMask = (1UL << g_reservedLruBits);
-constexpr Address g_dirtyMask = (1UL << (g_reservedLruBits + 1));
 
 class BaseCache {
 public:
@@ -48,8 +45,7 @@ protected:
     void updateWriteStats(bool hit);
     void checkHit(bool hit);
     
-    Address makeMask(int start, int length) const;
-    void printMask(const std::string& label, int start, int length, unsigned long mask) const;
+
     
 protected:
     struct CacheBlock {

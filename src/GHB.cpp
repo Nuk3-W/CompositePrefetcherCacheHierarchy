@@ -1,10 +1,9 @@
-#include "Prefetcher/GHB.h"
-#include "SystemCacheData.h"
+#include "Core/GHB.h"
 
 GHB::GHBEntry::GHBEntry(Address addr) : address(addr) {}
 
 
-GHB::GHB(size_t bufferSize, unsigned long blockSize) : bufferSize_(bufferSize) {
+GHB::GHB(size_t bufferSize, uint32_t blockSize) : bufferSize_(bufferSize) {
     blockMask_ = ~0UL << static_cast<uint32_t>(std::log2(blockSize));
 }
 

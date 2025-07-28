@@ -1,4 +1,7 @@
- #include "CacheManager.h"
+#include "Core/CacheManager.h"
+
+// Using directives for cleaner code
+using Config::SystemCacheParams;
 
 CacheManager::CacheManager(const SystemCacheParams& params) : 
     controlUnit_(params.controlUnit_.kTrackerSize_ > 0 ? std::make_optional<ControlUnit>(params.controlUnit_, params.blockSize_) : std::nullopt) {
@@ -27,12 +30,12 @@ void CacheManager::access(Address addr, std::function<AccessResult(LevelCache&, 
     
     // First, try to access the requested address in L1 cache
     AccessResult writeBackAddr = accessFunc(caches_[0], addr);
-    if (isType<Hit>(writeBackAddr)) return;
+    if (Utils::isType<Hit>(writeBackAddr)) return;
 
     if (controlUnit_) {
         // turn this read cuntion to restrun AccessResult Prefetch or Miss only
         AccessResult prefetchResult = controlUnit_->readPrefetchedAddress(addr);
-        if (isType<Prefetch>(prefetchResult)) {
+        if (Utils::isType<Prefetch>(prefetchResult)) {
             controlUnit_->updateOnHit();
             AccessResult nextPrefetch = controlUnit_->prefetch(std::get<Prefetch>(prefetchResult).addr);
             pullFromLowerLevels(std::get<Prefetch>(nextPrefetch).addr, nextPrefetch);
@@ -55,11 +58,11 @@ void CacheManager::access(Address addr, std::function<AccessResult(LevelCache&, 
 void CacheManager::pullFromLowerLevels(Address addr, AccessResult writeBackAddr) {
     // Traverse the cache hierarchy from level 1 onwards
     for (std::size_t level = 1; level < caches_.size(); ++level) {
-        if (std::holds_alternative<Evict>(writeBackAddr)) {
+        if (Utils::isType<Evict>(writeBackAddr)) {
             handleLevelWriteBack(writeBackAddr, level);
         }
         writeBackAddr = caches_[level].read(addr);
-        if (std::holds_alternative<Hit>(writeBackAddr)) {
+        if (Utils::isType<Hit>(writeBackAddr)) {
             return;
         }
     }
@@ -70,17 +73,17 @@ void CacheManager::handleLevelWriteBack(AccessResult writeBackAddr, std::size_t 
 
     // Write the evicted block to this cache level
     AccessResult nextEvictedAddr = caches_[level].write(std::get<Evict>(writeBackAddr).addr);
-    if (std::holds_alternative<Hit>(nextEvictedAddr)) return;
+    if (Utils::isType<Hit>(nextEvictedAddr)) return;
 
     // If this level also evicts a block, recursively handle it
-    if (std::holds_alternative<Evict>(nextEvictedAddr)) {
+    if (Utils::isType<Evict>(nextEvictedAddr)) {
         handleLevelWriteBack(nextEvictedAddr, level + 1);
     }
 
     // Read the original block back through remaining levels to maintain hierarchy
     for (std::size_t i = level + 1; i < caches_.size(); ++i) {
         writeBackAddr = caches_[i].read(std::get<Evict>(writeBackAddr).addr);
-        if (std::holds_alternative<Hit>(writeBackAddr)) return;
+        if (Utils::isType<Hit>(writeBackAddr)) return;
     }
 }
 

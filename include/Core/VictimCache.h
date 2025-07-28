@@ -3,8 +3,11 @@
 #include <iostream>
 #include <utility>
 
-#include "Caches/BaseCache.h"
-#include "Caches/CacheData.h"
+#include "BaseCache.h"
+#include "Config/CacheParams.h"
+
+// Using directives for cleaner code
+using Config::CacheParams;
 
 class VictimCache : public BaseCache {
 public:

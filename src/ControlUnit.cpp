@@ -1,6 +1,9 @@
-#include "Prefetcher/ControlUnit.h"
+#include "Core/ControlUnit.h"
 
-ControlUnit::ControlUnit(const ControlUnitParams& params, const unsigned long blockSize) : 
+// Using directives for cleaner code
+using Config::ControlUnitParams;
+
+ControlUnit::ControlUnit(const ControlUnitParams& params, const uint32_t blockSize) : 
     superBlockTracker_(params.kTrackerSize_),
     currentPrefetcher_(PrefetchType::Sequential),
     prefetcher_(blockSize) {

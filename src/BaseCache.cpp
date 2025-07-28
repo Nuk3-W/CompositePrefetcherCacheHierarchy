@@ -1,5 +1,9 @@
-#include "Caches/BaseCache.h"
-#include <optional>
+#include "Core/BaseCache.h"
+#include "Utils/BitUtils.h"
+
+// Using directives for cleaner code
+using Config::CacheParams;
+using namespace Config::Constants;
 
 BaseCache::BaseCache(const CacheParams& params) :
     params_(params),
@@ -11,9 +15,9 @@ BaseCache::BaseCache(const CacheParams& params) :
     int setBits   = static_cast<int>(std::log2(params_.sets_));
     int tagBits   = static_cast<int>(sizeof(Address) * 8 - (blockBits + setBits));
 
-    bitMasks_.offsetBits_ = makeMask(0, blockBits);
-    bitMasks_.setBits_    = makeMask(blockBits, setBits);
-    bitMasks_.tagBits_    = makeMask(blockBits + setBits, tagBits);
+    bitMasks_.offsetBits_ = Utils::makeMask(0, blockBits);
+    bitMasks_.setBits_    = Utils::makeMask(blockBits, setBits);
+    bitMasks_.tagBits_    = Utils::makeMask(blockBits + setBits, tagBits);
 }
 
 std::optional<int> BaseCache::findHitWay(Address addr, Address& setIndex) const {
@@ -100,11 +104,7 @@ void BaseCache::updateWriteStats(bool hit) {
 	if (!hit) ++stats_.writeMiss_;
 }
 
-Address BaseCache::makeMask(int start, int length) const {
-	if (length == 0) return 0;
-	if (start + length >= sizeof(Address) * 8) return ~0UL << start;
-	return ( ( 1UL << length ) - 1 ) << start;
-}
+
 
 //Asccessor and Mutator Functions for dirty and valid bits
 bool BaseCache::isDirtyBlock(const CacheBlock& block) const {
@@ -127,15 +127,6 @@ void BaseCache::setValid(CacheBlock& block) {
     block.extraBits_ |= g_validMask;
 }
 // ------------------------------------------------------
-
-void BaseCache::printMask(const std::string& label, int start, int length, unsigned long mask) const {
-	std::cout << std::left << std::setw(12) << label
-		<< "Start: " << std::setw(2) << start
-		<< " Len: " << std::setw(2) << length
-		<< " Hex: 0x" << std::hex << std::setw(16) << mask
-		<< "  Bin: " << std::bitset<32>(mask)
-		<< std::dec << '\n';
-}
 
 
 
