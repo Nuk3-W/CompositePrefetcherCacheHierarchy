@@ -1,11 +1,11 @@
-#ifndef SYSTEM_CACHE_DATA_H
-#define SYSTEM_CACHE_DATA_H
+#pragma once
 
 #include <vector>
 #include <string>
 #include <optional>
 #include <cstdint>
 #include <variant>
+#include <cmath>
 
 #include "Caches/CacheData.h"
 
@@ -30,5 +30,3 @@ struct Evict { Address addr; };
 struct Prefetch { Address addr; };
 
 using AccessResult = std::variant<Hit, Miss, Evict, Prefetch>;
-
-#endif // SYSTEM_CACHE_DATA_H

@@ -1,5 +1,4 @@
-#ifndef LEVEL_CACHE_H
-#define LEVEL_CACHE_H
+#pragma once
 
 #include <iostream>
 #include <iomanip>
@@ -32,4 +31,3 @@ private:
     
     std::optional<VictimCache> victimCache_;
 };
-#endif // LEVEL_CACHE_H

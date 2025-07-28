@@ -1,5 +1,4 @@
-#ifndef VICTIM_CACHE_H
-#define VICTIM_CACHE_H
+#pragma once
 
 #include <iostream>
 #include <utility>
@@ -18,5 +17,3 @@ private:
 	AccessResult swap(CacheBlock& block, int hitWay, Address setIndex);
 	AccessResult insertBlock(CacheBlock& block, Address setIndex, Address addr);
 };
-
-#endif // VICTIM_CACHE_H

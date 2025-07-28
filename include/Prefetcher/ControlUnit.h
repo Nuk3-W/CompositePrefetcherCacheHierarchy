@@ -1,5 +1,4 @@
-#ifndef CONTROL_UNIT_H
-#define CONTROL_UNIT_H
+#pragma once
 
 #include <vector>
 #include <iostream>
@@ -23,7 +22,7 @@ public:
     void updateThresholdOnMiss(Address missAddr);
 
     AccessResult prefetch(Address addr);
-    Address readPrefetchedAddress() const;
+    AccessResult readPrefetchedAddress(Address addr) const;
     Address getBlockMask() const { return prefetcher_.getBlockMask(); }
 
     void updateOnHit();
@@ -65,5 +64,3 @@ private:
     static constexpr size_t QUEUE_SIZE = 25;
     std::deque<std::pair<bool, PrefetchType>> recentPerformance_;
 };
-
-#endif // CONTROL_UNIT_H

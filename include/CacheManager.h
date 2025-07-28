@@ -1,5 +1,4 @@
-#ifndef CACHE_MANAGER_H
-#define CACHE_MANAGER_H
+#pragma once
 
 #include <memory>
 #include <array>
@@ -11,6 +10,7 @@
 #include "Caches/VictimCache.h"
 #include "Prefetcher/ControlUnit.h"
 #include "SystemCacheData.h"
+#include "Utils/VariantUtils.h"
 
 class CacheManager {
 public:
@@ -28,6 +28,5 @@ private:
 
     std::vector<LevelCache> caches_;
     std::optional<ControlUnit> controlUnit_;
+    unsigned long blockSize_;
 };
-
-#endif

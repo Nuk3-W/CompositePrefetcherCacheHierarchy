@@ -1,5 +1,4 @@
-#ifndef PREFETCHER_H
-#define PREFETCHER_H
+#pragma once
 
 #include "Caches/CacheData.h"
 #include "GHB.h"
@@ -30,5 +29,3 @@ private:
     uint32_t blockMask_{};
     GHB ghb_{512, 0};
 };
-
-#endif // PREFETCHER_H

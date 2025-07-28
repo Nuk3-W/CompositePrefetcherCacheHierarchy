@@ -1,5 +1,4 @@
-#ifndef CACHE_DATA_H
-#define CACHE_DATA_H
+#pragma once
 
 //I aint namespacing this shit
 using Address = unsigned long;
@@ -22,5 +21,3 @@ struct CacheStats {
     unsigned long swapRequests_;
     unsigned long swapHits_;
 };
-
-#endif // CACHE_DATA_H

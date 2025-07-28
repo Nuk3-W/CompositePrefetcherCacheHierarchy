@@ -1,6 +1,5 @@
 #include "Prefetcher/ControlUnit.h"
 
-
 ControlUnit::ControlUnit(const ControlUnitParams& params, const unsigned long blockSize) : 
     superBlockTracker_(params.kTrackerSize_),
     currentPrefetcher_(PrefetchType::Sequential),
@@ -177,8 +176,14 @@ AccessResult ControlUnit::prefetch(Address addr) {
     return prefetcher_.prefetch(addr, currentPrefetcher_);
 }
 
-Address ControlUnit::readPrefetchedAddress() const {
-    return prefetcher_.getPrefetchedAddress();
+AccessResult ControlUnit::readPrefetchedAddress(Address addr) const {
+    const Address prefetchedAddr = prefetcher_.getPrefetchedAddress(); //[TODO] make it so it only compares the block offset version
+    
+    // helps cache manager know to prefetch next address
+    if (prefetchedAddr == addr) {
+        return Prefetch{ prefetchedAddr };
+    }
+    return Miss{};
 }
 
 void ControlUnit::printStats() const {

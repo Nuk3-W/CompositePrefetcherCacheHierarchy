@@ -1,5 +1,4 @@
-#ifndef BASE_CACHE_H
-#define BASE_CACHE_H
+#pragma once
 
 #include <vector>
 #include <cmath>
@@ -69,4 +68,3 @@ protected:
     CacheStats stats_{};
     std::vector<CacheBlock> cache_{};
 };
-#endif // BaseCache_H

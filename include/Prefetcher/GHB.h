@@ -1,5 +1,4 @@
-#ifndef GHB_H
-#define GHB_H
+#pragma once
 
 #include <list>
 #include <unordered_map>
@@ -34,5 +33,3 @@ private:
     void removeFromIndexTable(Address addr, ListIt it);
     Address blockMask_{};
 };
-
-#endif // GHB_H

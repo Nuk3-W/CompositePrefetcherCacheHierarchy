@@ -27,14 +27,14 @@ void CacheManager::access(Address addr, std::function<AccessResult(LevelCache&, 
     
     // First, try to access the requested address in L1 cache
     AccessResult writeBackAddr = accessFunc(caches_[0], addr);
-    if (std::holds_alternative<Hit>(writeBackAddr)) return;
+    if (isType<Hit>(writeBackAddr)) return;
 
     if (controlUnit_) {
-        Address prefetchResult = controlUnit_->readPrefetchedAddress();
-        Address requestedBlock = addr & controlUnit_->getBlockMask();
-        if (prefetchResult == requestedBlock) {
+        // turn this read cuntion to restrun AccessResult Prefetch or Miss only
+        AccessResult prefetchResult = controlUnit_->readPrefetchedAddress(addr);
+        if (isType<Prefetch>(prefetchResult)) {
             controlUnit_->updateOnHit();
-            AccessResult nextPrefetch = controlUnit_->prefetch(prefetchResult);
+            AccessResult nextPrefetch = controlUnit_->prefetch(std::get<Prefetch>(prefetchResult).addr);
             pullFromLowerLevels(std::get<Prefetch>(nextPrefetch).addr, nextPrefetch);
             return;
         }
