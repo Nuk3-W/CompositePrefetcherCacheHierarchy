@@ -8,8 +8,8 @@
 namespace Utils {
     inline constexpr Address makeMask(int start, int length) {
         if (length == 0) return 0;
-        if (start + length >= sizeof(Address) * 8) return ~0UL << start;
-        return ( ( 1UL << length ) - 1 ) << start;
+        if (start + length >= sizeof(Address) * 8) return UINT32_MAX << start;
+        return ( ( static_cast<Address>(1) << length ) - 1 ) << start;
     }
 
     inline void printMask(const std::string& label, Address mask) {
