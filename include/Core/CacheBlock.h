@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Types.h"
+#include "Core/Types.h"
 #include "Utils/BitUtils.h"
 
 class CacheBlock {
@@ -32,10 +32,13 @@ class CacheBlock {
     
         void setMetaData(uint32_t meta) { data_.metaData_ = meta; }
         uint32_t getMetaData() const { return data_.metaData_; }
-    
+        
         uint8_t getLRU() const { return (data_.metaData_ & Constants::g_lruMask) >> 2; }
         void setLRU(uint8_t lru) {
             data_.metaData_ = (data_.metaData_ & ~Constants::g_lruMask) | (static_cast<uint32_t>(lru) << 2);
+        }
+        void incrementLRU() {
+            data_.metaData_ += 1;
         }
         
     private:
