@@ -32,12 +32,6 @@ protected:
     int getVictimLRU(Address set) const;
     void updateLRU(int set, int way);
     
-    bool isValidBlock(const CacheBlock& block) const;
-    void setValid(CacheBlock& block);
-    
-    bool isDirtyBlock(const CacheBlock& block) const;
-    void setDirty(CacheBlock& block);
-    void clearDirty(CacheBlock& block);
     
     AccessResult handleCacheEviction(CacheBlock&, Address newAddr);
     

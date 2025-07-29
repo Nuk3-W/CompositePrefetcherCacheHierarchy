@@ -7,6 +7,11 @@ class CacheBlock {
     public:
         CacheBlock(CacheBlockData& data) : data_(data) {}
         ~CacheBlock() = default;
+
+        void clear() {
+            data_.metaData_ = 0;
+            data_.tag_ = 0;
+        }   
     
         bool isValid() const { return data_.metaData_ & Constants::g_validMask; }
         bool isDirty() const { return data_.metaData_ & Constants::g_dirtyMask; }
@@ -33,9 +38,9 @@ class CacheBlock {
         void setMetaData(uint32_t meta) { data_.metaData_ = meta; }
         uint32_t getMetaData() const { return data_.metaData_; }
         
-        uint8_t getLRU() const { return (data_.metaData_ & Constants::g_lruMask) >> 2; }
+        uint8_t getLRU() const { return data_.metaData_ & Constants::g_lruMask; }
         void setLRU(uint8_t lru) {
-            data_.metaData_ = (data_.metaData_ & ~Constants::g_lruMask) | (static_cast<uint32_t>(lru) << 2);
+            data_.metaData_ = (data_.metaData_ & ~Constants::g_lruMask) | lru;
         }
         void incrementLRU() {
             data_.metaData_ += 1;
@@ -46,7 +51,7 @@ class CacheBlock {
         static constexpr int s_reservedLruBits = 8;
         static constexpr int s_validBits       = 1;
         static constexpr int s_dirtyBits       = 1;
-        static constexpr Address s_lruMask   = Utils::makeMask(0, s_reservedLruBits);
-        static constexpr Address s_validMask = Utils::makeMask(s_reservedLruBits, s_validBits);
-        static constexpr Address s_dirtyMask = Utils::makeMask(s_reservedLruBits + s_validBits, s_dirtyBits);
-    };
+        static constexpr Address s_lruMask     = Utils::makeMask(0, s_reservedLruBits);
+        static constexpr Address s_validMask   = Utils::makeMask(s_reservedLruBits, s_validBits);
+        static constexpr Address s_dirtyMask   = Utils::makeMask(s_reservedLruBits + s_validBits, s_dirtyBits);
+};

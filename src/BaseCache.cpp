@@ -106,29 +106,5 @@ void BaseCache::updateWriteStats(bool hit) {
 
 
 
-//Asccessor and Mutator Functions for dirty and valid bits
-bool BaseCache::isDirtyBlock(const CacheBlock& block) const {
-    return block.extraBits_ & g_dirtyMask;
-}
-
-void BaseCache::setDirty(CacheBlock& block) {
-    block.extraBits_ |= g_dirtyMask;
-}
-
-void BaseCache::clearDirty(CacheBlock& block) {
-    block.extraBits_ &= ~g_dirtyMask;
-}
-
-bool BaseCache::isValidBlock(const CacheBlock& block) const {
-    return block.extraBits_ & g_validMask;
-}
-
-void BaseCache::setValid(CacheBlock& block) {
-    block.extraBits_ |= g_validMask;
-}
-// ------------------------------------------------------
-
-
-
 
 
