@@ -20,61 +20,6 @@ BaseCache::BaseCache(const CacheParams& params) :
     bitMasks_.tagBits_    = Utils::makeMask(blockBits + setBits, tagBits);
 }
 
-std::optional<int> BaseCache::findHitWay(Address addr, Address& setIndex) const {
-    int blockBits = static_cast<int>(std::log2(params_.blockSize_));
-    setIndex = ((addr & bitMasks_.setBits_) >> blockBits) * params_.assoc_;
-    Address tag = addr & bitMasks_.tagBits_;
-    
-    for (std::size_t i = 0; i < params_.assoc_; ++i) {
-        int cacheIndex = static_cast<int>(setIndex + i);
-        if (!isValidBlock(cache_[cacheIndex])) continue;
-        Address cacheTag = cache_[cacheIndex].addr_ & bitMasks_.tagBits_;
-        if (cacheTag == tag) return static_cast<int>(i);
-    }
-    return std::nullopt;
-}
-
-int BaseCache::getVictimLRU(Address set) const {
-    // Track {way_index, lru_counter} for victim selection
-    using WayIndex = int;
-    using LruCounter = uint32_t;
-    auto [wayIndex, lruCounter] = std::pair<WayIndex, LruCounter>{0, 0};
-    
-    for (std::size_t currentWay = 0; currentWay < params_.assoc_; ++currentWay) {
-        const auto& currentBlock = cache_[set + currentWay];
-        
-        // Invalid blocks are always preferred victims
-        if (!isValidBlock(currentBlock)) {
-            return static_cast<int>(currentWay);
-        }
-        
-        // Extract the LRU counter bits from the block's metadata
-        const LruCounter currentLruCounter = static_cast<LruCounter>(currentBlock.extraBits_ & g_lruMask);
-        if (currentLruCounter > lruCounter) {
-            wayIndex = static_cast<int>(currentWay);
-            lruCounter = currentLruCounter;
-        }
-    }
-    
-    return wayIndex;
-}
-
-void BaseCache::updateLRU(int set, int way) {
-    const Address targetLru = cache_[set + way].extraBits_ & g_lruMask;
-
-    // Increment LRU for all blocks with lower or equal LRU value
-    for (std::size_t wayIndex = 0; wayIndex < params_.assoc_; ++wayIndex) {
-        const Address currentLru = cache_[set + wayIndex].extraBits_ & g_lruMask;
-        // <= instead of < because lrus all start at 0 too lazy to change logic
-        if (currentLru <= targetLru) {
-            cache_[set + wayIndex].extraBits_ += 1;
-        }
-    }
-    
-    // Reset the accessed block to most recently used (LRU = 0)
-    cache_[set + way].extraBits_ &= ~g_lruMask;
-}
-
 AccessResult BaseCache::handleCacheEviction(CacheBlock& block, [[maybe_unused]] Address addr) {
 	setValid(block);
     if (isDirtyBlock(block)) {

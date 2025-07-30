@@ -5,10 +5,10 @@
 #include "Core/CacheBlock.h"
 #include "Config/CacheParams.h"
 
-class CacheCollection : public IBlockCollection<CacheBlock> {
+class CacheContainer : public IBlockCollection<CacheBlock> {
 public:
-    CacheCollection(const CacheParams& params);
-    ~CacheCollection() override = default;
+    CacheContainer(const CacheParams& params);
+    ~CacheContainer() override = default;
 
     std::optional<std::reference_wrapper<CacheBlock>> findBlock(Address address) override;
     std::optional<std::reference_wrapper<const CacheBlock>> findBlock(Address address) const override;
@@ -19,7 +19,7 @@ public:
     const_iterator end() const override { return blocks_.cend(); }
     std::size_t size() const override { return blocks_.size(); }
 
-    // Cache Specific Functions -------------------------------------------
+    // Cache Specific iterators -------------------------------------------
     iterator setBegin(Address address) override;
     const_iterator setBegin(Address address) const override;
     iterator setEnd(Address address) override;

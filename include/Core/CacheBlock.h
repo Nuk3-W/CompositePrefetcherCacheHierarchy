@@ -13,23 +13,23 @@ class CacheBlock {
             data_.tag_ = 0;
         }   
     
-        bool isValid() const { return data_.metaData_ & Constants::g_validMask; }
-        bool isDirty() const { return data_.metaData_ & Constants::g_dirtyMask; }
+        bool isValid() const { return data_.metaData_ & s_validMask; }
+        bool isDirty() const { return data_.metaData_ & s_dirtyMask; }
     
         void setValid() {
-            data_.metaData_ |= Constants::g_validMask;
+            data_.metaData_ |= s_validMask;
         }
     
         void clearValid() {
-            data_.metaData_ &= ~Constants::g_validMask;
+            data_.metaData_ &= ~s_validMask;
         }
     
         void setDirty() {
-            data_.metaData_ |= Constants::g_dirtyMask;
+            data_.metaData_ |= s_dirtyMask;
         }
     
         void clearDirty() {
-            data_.metaData_ &= ~Constants::g_dirtyMask;
+            data_.metaData_ &= ~s_dirtyMask;
         }
     
         void setTag(Address tag) { data_.tag_ = tag; }
@@ -38,9 +38,9 @@ class CacheBlock {
         void setMetaData(uint32_t meta) { data_.metaData_ = meta; }
         uint32_t getMetaData() const { return data_.metaData_; }
         
-        uint8_t getLRU() const { return data_.metaData_ & Constants::g_lruMask; }
+        uint8_t getLRU() const { return data_.metaData_ & s_lruMask; }
         void setLRU(uint8_t lru) {
-            data_.metaData_ = (data_.metaData_ & ~Constants::g_lruMask) | lru;
+            data_.metaData_ = (data_.metaData_ & ~s_lruMask) | lru;
         }
         void incrementLRU() {
             data_.metaData_ += 1;
