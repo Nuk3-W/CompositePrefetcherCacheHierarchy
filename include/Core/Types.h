@@ -1,25 +1,23 @@
 #pragma once
 
 #include <cstdint>
+#include <variant>
 
 #include "Utils/BitUtils.h"
 #include "Config/Constants.h"
+#include "Core/CacheBlock.h"
 
 using Address = uint32_t;
 
-enum class AccessResult {
-    Hit,
-    Miss
-};
+struct Hit { CacheBlock& block; };
+struct Miss { CacheBlock& block; };
+struct Evict { CacheBlock& block; };
+
+using AccessResult = std::variant<Hit, Miss, Evict>;
 
 enum class AccessType {
     Read,
     Write
-};  
-
-struct CacheBlockData {
-    Address tag_{};
-    uint32_t metaData_{};
 };
 
 struct BitMasks {

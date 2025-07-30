@@ -3,6 +3,8 @@
 #include "Core/Types.h"
 #include "Utils/BitUtils.h"
 
+
+
 class CacheBlock {
     public:
         CacheBlock(CacheBlockData& data) : data_(data) {}
@@ -15,22 +17,11 @@ class CacheBlock {
     
         bool isValid() const { return data_.metaData_ & s_validMask; }
         bool isDirty() const { return data_.metaData_ & s_dirtyMask; }
-    
-        void setValid() {
-            data_.metaData_ |= s_validMask;
-        }
-    
-        void clearValid() {
-            data_.metaData_ &= ~s_validMask;
-        }
-    
-        void setDirty() {
-            data_.metaData_ |= s_dirtyMask;
-        }
-    
-        void clearDirty() {
-            data_.metaData_ &= ~s_dirtyMask;
-        }
+
+        void setValid() { data_.metaData_ |= s_validMask; }
+        void clearValid() { data_.metaData_ &= ~s_validMask; }
+        void setDirty() { data_.metaData_ |= s_dirtyMask; }
+        void clearDirty() { data_.metaData_ &= ~s_dirtyMask; }
     
         void setTag(Address tag) { data_.tag_ = tag; }
         Address getTag() const { return data_.tag_; }
@@ -39,15 +30,17 @@ class CacheBlock {
         uint32_t getMetaData() const { return data_.metaData_; }
         
         uint8_t getLRU() const { return data_.metaData_ & s_lruMask; }
-        void setLRU(uint8_t lru) {
-            data_.metaData_ = (data_.metaData_ & ~s_lruMask) | lru;
-        }
-        void incrementLRU() {
-            data_.metaData_ += 1;
-        }
+        void setLRU(uint8_t lru) { data_.metaData_ = (data_.metaData_ & ~s_lruMask) | lru; }
+        void incrementLRU() { data_.metaData_ += 1; }
         
     private:
+        struct CacheBlockData {
+            Address tag_{};
+            uint32_t metaData_{};
+        };
+
         CacheBlockData& data_{};
+
         static constexpr int s_reservedLruBits = 8;
         static constexpr int s_validBits       = 1;
         static constexpr int s_dirtyBits       = 1;

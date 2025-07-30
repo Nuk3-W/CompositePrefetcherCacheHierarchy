@@ -3,6 +3,7 @@
 #include <vector>
 #include "Interface/IBlockCollection.h"
 #include "Core/CacheBlock.h"
+#include "Core/Types.h"
 #include "Config/CacheParams.h"
 
 class CacheContainer : public IBlockCollection<CacheBlock> {
@@ -28,7 +29,7 @@ public:
 private:
     int blockBits_{};
     Config::CacheParams params_{};
-    Types::BitMasks bitMasks_{};
+    BitMasks bitMasks_{};
     std::vector<CacheBlock> blocks_{};
 };
 

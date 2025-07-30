@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Config/CacheParams.h"
+#include "Utils/VariantUtils.h"
 #include "Core/CacheLRUReplacement.h"
 #include "Core/CacheContainer.h"
 #include "Core/CacheBlock.h"
@@ -10,10 +11,13 @@
 
 class CacheContainerManager {
 public:
-    explicit CacheContainerManager(const CacheParams& params);
+    CacheContainerManager(const CacheParams& params);
     ~CacheContainerManager() = default;
 
-    std::optional<std::reference_wrapper<CacheBlock>> findAddr(Address addr);
+    AccessResult read(Address addr);
+    AccessResult write(Address addr);
+    
+private:
     std::reference_wrapper<CacheBlock> evict(Address addr);
 
 private:
