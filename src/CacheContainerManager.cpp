@@ -1,44 +1,32 @@
 #include "Core/CacheContainerManager.h"
+#include "Utils/VariantUtils.h"
+#include <iomanip>
 
-CacheContainerManager::CacheContainerManager(const CacheParams& params) 
+CacheContainerManager::CacheContainerManager(const Config::CacheParams& params) 
     : cache_(params), replacementPolicy_() {
 }
 
-// All meta data is changed here so further abstraction dont need to worry about it
 AccessResult CacheContainerManager::read(Address addr) {
     auto block = cache_.findBlock(addr);
     if (block) {
-        return Hit{*block};
+        return Hit{std::ref(block->get())};
     }
-    auto evictedBlock = evict(addr);
-    if (Utils::isType<Evict>(evictedBlock)) {
-        Utils::get<Evict>(evictedBlock).clearDirty();
-        return Evict{evictedBlock};
-    }
-    Utils::get<Miss>(evictedBlock).clearDirty();
-    return Miss{evictedBlock};
+    return evict(addr);
 }
     
 AccessResult CacheContainerManager::write(Address addr) {
     auto block = cache_.findBlock(addr);
     if (block) {
-        block->setDirty();
-        return Hit{*block};
+        return Hit{std::ref(block->get())};
     }
-    auto evictedBlock = evict(addr);
-
-    if (Utils::isType<Evict>(evictedBlock)) {
-        Utils::get<Evict>(evictedBlock).setDirty();
-        return Evict{evictedBlock};
-    }
-    Utils::get<Miss>(evictedBlock).setDirty();
-    return Miss{evictedBlock};
+    return evict(addr);
 }
 
+// evict just finds a candidate and reports its old status. It does NOT modify it.
 AccessResult CacheContainerManager::evict(Address addr) {
-    auto evictedBlock = replacementPolicy_.evict(cache_, addr);
+    auto& evictedBlock = replacementPolicy_.evict(cache_, addr).get();
     if (evictedBlock.isDirty()) {
-        return Evict{evictedBlock};
+        return Evict{std::ref(evictedBlock)};
     }
-    return Miss{evictedBlock};
+    return Miss{std::ref(evictedBlock)};
 }

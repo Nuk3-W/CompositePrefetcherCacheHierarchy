@@ -10,14 +10,12 @@
 
 // Using directives for cleaner code
 using Config::CacheParams;
-using Config::SystemCacheParams;
-
-// tested and works
+using Config::SystemParams;
 
 void buildMaps(std::unordered_map<std::string, unsigned long>& sizeMap,
                std::unordered_map<std::string, unsigned long>& assocMap,
                std::unordered_map<std::string, unsigned long>& victimMap,
-               SystemCacheParams& params) {
+               SystemParams& params) {
 
     std::ifstream file("config.txt");
 
@@ -36,7 +34,9 @@ void buildMaps(std::unordered_map<std::string, unsigned long>& sizeMap,
         if ( key == "block_size" ) {
             iss >> params.blockSize_;
         } else if ( key == "trace_file" ) {
-            iss >> params.traceFile_;
+            std::string filename;
+            iss >> filename;
+            params.traceFile_ = "tests/" + filename;
         } else if ( key.find("_blocks") != std::string::npos ) {
             std::string level = key.substr(0, key.find("_"));
             unsigned long val;
@@ -52,10 +52,6 @@ void buildMaps(std::unordered_map<std::string, unsigned long>& sizeMap,
             unsigned long val;
             iss >> val;
             assocMap[level] = val;
-        } else if ( key == "control_unit_tracker" ) {
-            iss >> params.controlUnit_.kTrackerSize_;
-        } else if ( key == "super_block_bits" ) {
-            iss >> params.controlUnit_.superBlockBits_;
         }
     }
 }
@@ -63,7 +59,7 @@ void buildMaps(std::unordered_map<std::string, unsigned long>& sizeMap,
 void buildCacheParams(const std::unordered_map<std::string, unsigned long>& sizeMap,
                       const std::unordered_map<std::string, unsigned long>& assocMap,
                       const std::unordered_map<std::string, unsigned long>& victimMap,
-                      SystemCacheParams& sysParams) {
+                      SystemParams& sysParams) {
 
     sysParams.caches_.resize(sizeMap.size());
     sysParams.vCaches_.resize(sizeMap.size());
@@ -106,14 +102,12 @@ void buildCacheParams(const std::unordered_map<std::string, unsigned long>& size
 	}
 }
 
-void loadConfigFromFile(SystemCacheParams& params) {
+void loadConfigFromFile(SystemParams& params) {
     std::unordered_map<std::string, unsigned long> sizeMap;
     std::unordered_map<std::string, unsigned long> assocMap;
     std::unordered_map<std::string, unsigned long> victimMap;
     
-
-
-	//uses out parameters for maps
+    //uses out parameters for maps
 	buildMaps(sizeMap, assocMap, victimMap, params);
 
     // Step 2: Build CacheParams for L1, L2...
@@ -130,8 +124,4 @@ void loadConfigFromFile(SystemCacheParams& params) {
     for ( const auto& v : params.vCaches_ ) {
         std::cout << "Blocks: " << v.assoc_ << ", Size: " << v.size_ << "\n";
     }
-
-    std::cout << "Control Unit:\n";
-    std::cout << "Tracker Size: " << params.controlUnit_.kTrackerSize_ << "\n";
-    std::cout << "Super Block Bits: " << params.controlUnit_.superBlockBits_ << "\n";
 }

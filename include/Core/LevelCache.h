@@ -1,37 +1,25 @@
 #pragma once
 
-#include <iostream>
-#include <iomanip>
-#include <optional>
-#include <vector>
-#include <cmath>
-#include <bitset>
-
-#include "BaseCache.h"
-#include "VictimCache.h"
+#include "Core/CacheContainerManager.h"
 #include "Config/CacheParams.h"
+#include "Core/Types.h"
+#include "Utils/VariantUtils.h"
+#include "Core/StatisticsManager.h"
+#include <memory>
+#include <optional>
 
-// Using directives for cleaner code
-using Config::CacheParams;
-
-class CacheManager;
-
-class LevelCache : public BaseCache {
+class LevelCache {
 public:
-    LevelCache(const CacheParams& params, const CacheParams& vParams);
+    LevelCache(const Config::CacheParams& mainCacheParams, const Config::CacheParams& victimCacheParams = Config::CacheParams{}, std::size_t levelIndex = 0);
+    ~LevelCache() = default;
 
     AccessResult read(Address addr);
     AccessResult write(Address addr);
-    void printStats() const;
-
+    void printSetContents() const;
 private:
-    enum class AccessType { Read, Write };
-    
-    AccessResult access(Address addr, AccessType type);
-    AccessResult handleHit(Address setIndex, int way, AccessType type);
-    AccessResult handleMiss(Address setIndex, Address addr, AccessType type);
-    
-    AccessResult handleVictim(CacheBlock& evict, Address addr);
-    
-    std::optional<VictimCache> victimCache_;
+    AccessResult handleVictimCacheAccess(Address addr, AccessResult& mainResult);
+private:
+    CacheContainerManager mainCache_;
+    std::optional<CacheContainerManager> victimCache_{ std::nullopt };
+    std::size_t levelIndex_;
 };

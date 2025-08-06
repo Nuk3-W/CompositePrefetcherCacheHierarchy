@@ -2,16 +2,16 @@
 
 #include <cstdint>
 #include <variant>
-
-#include "Utils/BitUtils.h"
-#include "Config/Constants.h"
-#include "Core/CacheBlock.h"
+#include <functional>
 
 using Address = uint32_t;
 
-struct Hit { CacheBlock& block; };
-struct Miss { CacheBlock& block; };
-struct Evict { CacheBlock& block; };
+// Forward declaration
+class CacheBlock;
+
+struct Hit { std::reference_wrapper<CacheBlock> block; };
+struct Miss { std::reference_wrapper<CacheBlock> block; };
+struct Evict { std::reference_wrapper<CacheBlock> block; };
 
 using AccessResult = std::variant<Hit, Miss, Evict>;
 

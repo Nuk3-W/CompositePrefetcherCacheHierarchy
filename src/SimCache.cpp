@@ -5,12 +5,13 @@
 #include <limits>
 
 #include "Config/Params.h"
-#include "Core/CacheManager.h"
+#include "Core/MemoryController.h"
+#include "Core/StatisticsManager.h"
 
 // Using directives for cleaner code
-using Config::SystemCacheParams;
+using Config::SystemParams;
 
-void loadConfigFromFile(SystemCacheParams& params);
+void loadConfigFromFile(SystemParams& params);
 
 int main(int argc, char* argv[]) {
     using std::cerr;
@@ -19,12 +20,11 @@ int main(int argc, char* argv[]) {
     using std::string;
 
     //trace file contained within params
-    SystemCacheParams params{};
+    SystemParams params{};
 
 	loadConfigFromFile(params);
 
-	CacheManager cacheManager(params);
-
+	MemoryController memoryController(params);
 
     std::ifstream trace(params.traceFile_);
     if (!trace.is_open()) {
@@ -38,18 +38,17 @@ int main(int argc, char* argv[]) {
     while (trace >> op >> std::hex >> addr) {
         //std::cout << "Processing address: " << std::hex << addr << std::dec << std::endl;
         if (op == 'r') {
-			cacheManager.read(addr);
+			memoryController.read(addr);
         }
         else if (op == 'w') {
-            cacheManager.write(addr);
+            memoryController.write(addr);
         }
         else {
             cerr << "Unknown operation: " << op << endl;
         }
     }
 
-	cacheManager.printStats();
-
     trace.close();
+    StatisticsManager::getInstance().printDetailedStats();
     return 0;
 }

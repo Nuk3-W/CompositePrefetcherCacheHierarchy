@@ -17,14 +17,15 @@ public:
         
         // Find the least recently used block in this set
         auto lruBlock = setBegin;
-        uint8_t minLRU = lruBlock->getLRU();
+        uint8_t maxLRU = lruBlock->getLRU();
         
         for (auto it = setBegin; it != setEnd; ++it) {
             if (!it->isValid()) {
+                updateLRU(container, addr, *it);
                 return *it;  // Return invalid block immediately
             }
-            if (it->getLRU() < minLRU) {
-                minLRU = it->getLRU();
+            if (it->getLRU() > maxLRU) {
+                maxLRU = it->getLRU();
                 lruBlock = it;
             }
         }
@@ -33,15 +34,14 @@ public:
         return *lruBlock;
     }
     
-    void updateLRU(CacheContainer& container, Address addr, const CacheBlock& accessedBlock) {
-        // Increment LRU counters for all blocks in the same set
-        auto setBegin = container.setBegin(addr);
-        auto setEnd = container.setEnd(addr);
-        
-        for (auto it = setBegin; it != setEnd; ++it) {
-            it->incrementLRU();
+    void updateLRU(CacheContainer& container, Address addr, CacheBlock& accessedBlock) {
+        const auto maxLRU = accessedBlock.getLRU();
+        for (auto it = container.setBegin(addr); it != container.setEnd(addr); ++it) {
+            if (it->getLRU() <= maxLRU) {
+                it->incrementLRU();
+            }
         }
         
-        accessedBlock.setLRU(0);
+        accessedBlock.setLRU(static_cast<uint8_t>(0));
     }
 };

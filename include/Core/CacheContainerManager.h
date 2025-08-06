@@ -11,14 +11,14 @@
 
 class CacheContainerManager {
 public:
-    CacheContainerManager(const CacheParams& params);
+    CacheContainerManager(const Config::CacheParams& params);
     ~CacheContainerManager() = default;
 
     AccessResult read(Address addr);
     AccessResult write(Address addr);
     
 private:
-    std::reference_wrapper<CacheBlock> evict(Address addr);
+    AccessResult evict(Address addr);
 
 private:
     CacheContainer cache_;
