@@ -8,8 +8,10 @@
 #include "Core/MemoryController.h"
 #include "Core/StatisticsManager.h"
 
-// Using directives for cleaner code
 using Config::SystemParams;
+
+constexpr char READ_OPERATION = 'r';
+constexpr char WRITE_OPERATION = 'w';
 
 void loadConfigFromFile(SystemParams& params);
 
@@ -19,7 +21,6 @@ int main(int argc, char* argv[]) {
     using std::endl;
     using std::string;
 
-    //trace file contained within params
     SystemParams params{};
 
 	loadConfigFromFile(params);
@@ -36,11 +37,10 @@ int main(int argc, char* argv[]) {
     Address addr;
 
     while (trace >> op >> std::hex >> addr) {
-        //std::cout << "Processing address: " << std::hex << addr << std::dec << std::endl;
-        if (op == 'r') {
+        if (op == READ_OPERATION) {
 			memoryController.read(addr);
         }
-        else if (op == 'w') {
+        else if (op == WRITE_OPERATION) {
             memoryController.write(addr);
         }
         else {

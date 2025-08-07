@@ -15,16 +15,6 @@ void MemoryController::write(Address addr) {
     access(addr, [](LevelCache& cache, Address address) { return cache.write(address); }, AccessType::Write);
 }
 
-void MemoryController::insertBlock(CacheBlock& block, Address addr, AccessType accessType) {
-    block.setAddress(addr);
-    block.setValid();
-    if (accessType == AccessType::Write) {
-        block.setDirty();
-    } else {
-        block.clearDirty();
-    }
-}
-
 void MemoryController::access(Address addr, std::function<AccessResult(LevelCache&, Address)> accessFunc, AccessType accessType) {
     AccessResult result = accessFunc(caches_[l1CacheIndex_], addr);
     
@@ -47,9 +37,8 @@ void MemoryController::pullFromLowerLevels(Address addr) {
     for (std::size_t level = l2CacheStart_; level < caches_.size(); ++level) {
         AccessResult cacheResult = caches_[level].read(addr);
         
-        if (Utils::isType<Hit>(cacheResult)) {
-            return;
-        }
+        if (Utils::isType<Hit>(cacheResult)) return;
+        
         
         if (Utils::isType<Evict>(cacheResult)) {
             evictionHandler_.processEviction(cacheResult, level, caches_);
@@ -60,9 +49,14 @@ void MemoryController::pullFromLowerLevels(Address addr) {
     }
 }
 
-void MemoryController::processWriteBack(AccessResult evictedBlock, std::size_t level) {
-    if (level >= caches_.size()) return;
-    evictionHandler_.processEviction(evictedBlock, level, caches_);
+void MemoryController::insertBlock(CacheBlock& block, Address addr, AccessType accessType) {
+    block.setAddress(addr);
+    block.setValid();
+    if (accessType == AccessType::Write) {
+        block.setDirty();
+    } else {
+        block.clearDirty();
+    }
 }
 
 

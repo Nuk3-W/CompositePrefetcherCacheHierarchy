@@ -52,6 +52,7 @@ AccessResult LevelCache::handleVictimCacheAccess(Address addr, AccessResult& mai
 
     AccessResult victimResult = victimCache_->read(addr);
     
+    // reason for swap is we use references to blocks and the main cache needs to be written to not the victim cache
     std::swap(Utils::getBlock(mainResult), Utils::getBlock(victimResult));
     
     auto& blockInMain = Utils::getBlock(mainResult);

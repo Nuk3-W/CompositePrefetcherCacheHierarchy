@@ -1,6 +1,5 @@
 #include "Core/CacheContainerManager.h"
-#include "Utils/VariantUtils.h"
-#include <iomanip>
+
 
 CacheContainerManager::CacheContainerManager(const Config::CacheParams& params) 
     : cache_(params), replacementPolicy_() {
@@ -24,7 +23,6 @@ AccessResult CacheContainerManager::write(Address addr) {
     return evict(addr);
 }
 
-// evict just finds a candidate and reports its old status. It does NOT modify it.
 AccessResult CacheContainerManager::evict(Address addr) {
     auto& evictedBlock = replacementPolicy_.evict(cache_, addr).get();
     if (evictedBlock.isDirty()) {

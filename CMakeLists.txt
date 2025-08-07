@@ -10,10 +10,6 @@ list(REMOVE_ITEM MAIN_SRC_FILES ${PROJECT_SOURCE_DIR}/src/testCheck.cpp)
 
 add_executable(CacheSim ${MAIN_SRC_FILES})
 
-# TestCheck executable
-add_executable(testCheck ${PROJECT_SOURCE_DIR}/src/testCheck.cpp ${PROJECT_SOURCE_DIR}/src/CacheContainerManager.cpp ${PROJECT_SOURCE_DIR}/src/CacheContainer.cpp 
-${PROJECT_SOURCE_DIR}/src/LevelCache.cpp ${PROJECT_SOURCE_DIR}/src/StatisticsManager.cpp)
-
 # Copy config.txt to build directory for CacheSim
 add_custom_command(TARGET CacheSim POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different

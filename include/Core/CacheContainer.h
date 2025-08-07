@@ -14,14 +14,11 @@ public:
     ~CacheContainer() override = default;
 
     std::optional<std::reference_wrapper<CacheBlock>> findBlock(Address address) override;
-    std::optional<std::reference_wrapper<const CacheBlock>> findBlock(Address address) const override;
 
     std::size_t size() const override { return blocks_.size(); }
 
     iterator setBegin(Address address);
-    const_iterator setBegin(Address address) const;
     iterator setEnd(Address address);
-    const_iterator setEnd(Address address) const;
 
 private:    
     int blockBits_{};

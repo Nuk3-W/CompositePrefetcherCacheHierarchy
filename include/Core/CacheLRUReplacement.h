@@ -5,43 +5,45 @@
 #include "Core/CacheBlock.h"
 #include "Core/Types.h"
 
+using LRUValue = uint8_t;
+using CacheBlockRef = std::reference_wrapper<CacheBlock>;
+
 class CacheLRUReplacement {
 public:
     CacheLRUReplacement() = default;
     ~CacheLRUReplacement() = default;
 
-    std::reference_wrapper<CacheBlock> evict(CacheContainer& container, Address addr) {
-        // Find the set for this address
+    CacheBlockRef evict(CacheContainer& container, Address addr) {
         auto setBegin = container.setBegin(addr);
         auto setEnd = container.setEnd(addr);
         
-        // Find the least recently used block in this set
-        auto lruBlock = setBegin;
-        uint8_t maxLRU = lruBlock->getLRU();
+        auto leastRecentlyUsedBlock = setBegin;
+        LRUValue highestLRUValue = leastRecentlyUsedBlock->getLRU();
         
-        for (auto it = setBegin; it != setEnd; ++it) {
-            if (!it->isValid()) {
-                updateLRU(container, addr, *it);
-                return *it;  // Return invalid block immediately
+        // find LRU block or invalid block prefer invalid block
+        for (auto currentBlock = setBegin; currentBlock != setEnd; ++currentBlock) {
+            if (!currentBlock->isValid()) {
+                updateLRU(container, addr, *currentBlock);
+                return *currentBlock;
             }
-            if (it->getLRU() > maxLRU) {
-                maxLRU = it->getLRU();
-                lruBlock = it;
+            if (currentBlock->getLRU() > highestLRUValue) {
+                highestLRUValue = currentBlock->getLRU();
+                leastRecentlyUsedBlock = currentBlock;
             }
         }
         
-        updateLRU(container, addr, *lruBlock);
-        return *lruBlock;
+        updateLRU(container, addr, *leastRecentlyUsedBlock);
+        return *leastRecentlyUsedBlock;
     }
     
     void updateLRU(CacheContainer& container, Address addr, CacheBlock& accessedBlock) {
-        const auto maxLRU = accessedBlock.getLRU();
-        for (auto it = container.setBegin(addr); it != container.setEnd(addr); ++it) {
-            if (it->getLRU() <= maxLRU) {
-                it->incrementLRU();
+        const LRUValue accessedBlockLRU = accessedBlock.getLRU();
+        for (auto currentBlock = container.setBegin(addr); currentBlock != container.setEnd(addr); ++currentBlock) {
+            if (currentBlock->getLRU() <= accessedBlockLRU) {
+                currentBlock->incrementLRU();
             }
         }
         
-        accessedBlock.setLRU(static_cast<uint8_t>(0));
+        accessedBlock.setLRU(static_cast<LRUValue>(0));
     }
 };
