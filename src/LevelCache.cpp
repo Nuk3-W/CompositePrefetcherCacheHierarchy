@@ -35,6 +35,7 @@ AccessResult LevelCache::write(Address addr) {
     
     if (victimCache_) {
         AccessResult victimResult = handleVictimCacheAccess(addr, mainResult);
+        Utils::getBlock(victimResult).setDirty();
         return victimResult;
     }
     

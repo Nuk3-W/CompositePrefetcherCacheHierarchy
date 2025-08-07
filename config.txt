@@ -3,3 +3,5 @@ block_size 16
 l1_size 1024
 l1_assoc 1
 l1vc_num_blocks 16
+l2_size 8192
+l2_assoc 4

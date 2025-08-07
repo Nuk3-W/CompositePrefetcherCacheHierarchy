@@ -18,7 +18,7 @@ ${PROJECT_SOURCE_DIR}/src/LevelCache.cpp ${PROJECT_SOURCE_DIR}/src/StatisticsMan
 add_custom_command(TARGET CacheSim POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
     ${PROJECT_SOURCE_DIR}/config.txt
-    $<TARGET_FILE_DIR:CacheSim>
+    $<TARGET_FILE_DIR:CacheSim>/config.txt
 )
 
 # Copy tests directory to build directory for CacheSim

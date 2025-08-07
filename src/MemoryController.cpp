@@ -28,9 +28,7 @@ void MemoryController::insertBlock(CacheBlock& block, Address addr, AccessType a
 void MemoryController::access(Address addr, std::function<AccessResult(LevelCache&, Address)> accessFunc, AccessType accessType) {
     AccessResult result = accessFunc(caches_[l1CacheIndex_], addr);
     
-    if (Utils::isType<Hit>(result)) {
-        return;
-    }
+    if (Utils::isType<Hit>(result)) return;
     
     handleCacheMiss(addr, result, accessType);
 }

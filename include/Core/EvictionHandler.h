@@ -20,10 +20,27 @@ public:
         
         Address addr = Utils::getAddress(eviction);
         
-        // Prepare hierarchy
-        for (std::size_t i = fromLevel + 1; i < levels.size(); ++i) {
+        // Write evicted block to next level
+        AccessResult result = levels[fromLevel + 1].write(addr);
+
+        if (Utils::isType<Hit>(result)) {
+            Utils::getBlock(result).copy(Utils::getBlock(eviction));
+            return;
+        } else if (Utils::isType<Evict>(result)) {
+            processEviction(result, fromLevel + 1, levels);
+        }
+
+        // we already read level + 1, so we need to read level + 2
+        traverseCacheHierarchy(addr, fromLevel + 2, levels);
+    
+        Utils::getBlock(result).copy(Utils::getBlock(eviction));
+    }
+
+private:
+    void traverseCacheHierarchy(Address addr, std::size_t startLevel, std::vector<LevelCache>& levels) {
+        for (std::size_t i = startLevel; i < levels.size(); ++i) {
             AccessResult result = levels[i].read(addr);
-            if (Utils::isType<Hit>(result)) break;
+            if (Utils::isType<Hit>(result)) return;
             if (Utils::isType<Evict>(result)) {
                 processEviction(result, i, levels);
             }
@@ -31,9 +48,5 @@ public:
             Utils::getBlock(result).setValid();
             Utils::getBlock(result).clearDirty();
         }
-        
-        // Write to next level
-        AccessResult result = levels[fromLevel + 1].write(addr);
-        Utils::getBlock(result).copy(Utils::getBlock(eviction));
     }
 };

@@ -9,6 +9,7 @@ CacheContainerManager::CacheContainerManager(const Config::CacheParams& params)
 AccessResult CacheContainerManager::read(Address addr) {
     auto block = cache_.findBlock(addr);
     if (block) {
+        replacementPolicy_.updateLRU(cache_, addr, block->get());
         return Hit{std::ref(block->get())};
     }
     return evict(addr);
@@ -17,6 +18,7 @@ AccessResult CacheContainerManager::read(Address addr) {
 AccessResult CacheContainerManager::write(Address addr) {
     auto block = cache_.findBlock(addr);
     if (block) {
+        replacementPolicy_.updateLRU(cache_, addr, block->get());
         return Hit{std::ref(block->get())};
     }
     return evict(addr);
