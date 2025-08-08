@@ -1,14 +1,11 @@
 #pragma once
 
 #include "Config/CacheParams.h"
-#include "Utils/VariantUtils.h"
 #include "Core/CacheLRUReplacement.h"
 #include "Core/CacheContainer.h"
 #include "Core/CacheBlock.h"
 #include "Core/Types.h"
-#include <optional>
-#include <functional>
-#include <iomanip>
+
 
 class CacheContainerManager {
 public:

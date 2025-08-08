@@ -15,30 +15,17 @@ void StatisticsManager::ensureLevelExists(std::size_t level) {
 
 void StatisticsManager::recordAccess(std::size_t level, AccessType accessType, CacheResult result) {
     ensureLevelExists(level);
-    
-    auto& stats = levelStats_[level];
-    
-    if (accessType == AccessType::Read) {
-        stats.reads_++;
-    } else {
-        stats.writes_++;
-    }
-    
-    if (result == CacheResult::Hit) {
-        stats.hits_++;
-    } else {
-        stats.misses_++;
-        if (accessType == AccessType::Read) {
-            stats.readMisses_++;
-        } else {
-            stats.writeMisses_++;
-        }
-    }
-    
-    if (result == CacheResult::Evict) {
-        stats.evictions_++;
-    }
-    
+    auto& s = levelStats_[level];
+    const bool isRead = (accessType == AccessType::Read);
+    const bool isHit = (result == CacheResult::Hit);
+    const bool isEvct = (result == CacheResult::Evict);
+    s.reads_ += isRead;
+    s.writes_ += !isRead;
+    s.hits_ += isHit;
+    s.misses_ += !isHit;
+    s.readMisses_ += (!isHit && isRead);
+    s.writeMisses_ += (!isHit && !isRead);
+    s.evictions_ += isEvct;
     totalAccesses_++;
 }
 
@@ -57,50 +44,6 @@ void StatisticsManager::recordWriteback(std::size_t level) {
     levelStats_[level].writebacks_++;
 }
 
-void StatisticsManager::recordHit(std::size_t level) {
-    ensureLevelExists(level);
-    levelStats_[level].hits_++;
-    totalAccesses_++;
-}
-
-void StatisticsManager::recordMiss(std::size_t level) {
-    ensureLevelExists(level);
-    levelStats_[level].misses_++;
-    totalAccesses_++;
-}
-
-void StatisticsManager::recordEviction(std::size_t level) {
-    ensureLevelExists(level);
-    levelStats_[level].evictions_++;
-}
-
-void StatisticsManager::recordWriteBack(std::size_t level) {
-    recordWriteback(level);
-}
-
-void StatisticsManager::printStats() const {
-    std::cout << "\n=== Cache Statistics ===\n";
-    std::cout << "Total Accesses: " << totalAccesses_ << "\n\n";
-
-    for (std::size_t i = 0; i < levelStats_.size(); ++i) {
-        const auto& stats = levelStats_[i];
-        uint64_t total = stats.hits_ + stats.misses_;
-        
-        if (total == 0) continue;
-
-        std::cout << "Level " << (i + 1) << " Cache:\n";
-        std::cout << "  Hits: " << stats.hits_ << " (" 
-                  << std::fixed << std::setprecision(2) 
-                  << (static_cast<double>(stats.hits_) / total * 100.0) << "%)\n";
-        std::cout << "  Misses: " << stats.misses_ << " (" 
-                  << std::fixed << std::setprecision(2) 
-                  << (static_cast<double>(stats.misses_) / total * 100.0) << "%)\n";
-        std::cout << "  Evictions: " << stats.evictions_ << "\n";
-        std::cout << "  Writebacks: " << stats.writebacks_ << "\n";
-        std::cout << "  Hit Rate: " << std::fixed << std::setprecision(2) 
-                  << (static_cast<double>(stats.hits_) / total * 100.0) << "%\n\n";
-    }
-}
 
 void StatisticsManager::printDetailedStats() const {
     std::cout << "\n=== Detailed Cache Statistics ===\n";

@@ -22,7 +22,6 @@ private:
 public:
     CacheBlock(CacheBlockData& data) : data_(data) {}
     CacheBlock() = default;
-    ~CacheBlock() = default;
 
     void clear() {
         data_.metaData_ = 0;

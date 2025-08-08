@@ -15,7 +15,6 @@ public:
 
     AccessResult read(Address addr);
     AccessResult write(Address addr);
-    void printSetContents() const;
 private:
     AccessResult handleVictimCacheAccess(Address addr, AccessResult& mainResult);
 private:

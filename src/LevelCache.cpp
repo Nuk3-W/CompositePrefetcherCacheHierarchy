@@ -1,11 +1,9 @@
 #include "Core/LevelCache.h"
 
-LevelCache::LevelCache(const Config::CacheParams& mainCacheParams, const Config::CacheParams& victimCacheParams, std::size_t levelIndex)
-    : mainCache_(mainCacheParams), levelIndex_(levelIndex) {
-    if (victimCacheParams.size_ > 0) {
-        victimCache_ = CacheContainerManager(victimCacheParams);
-    }
-}
+LevelCache::LevelCache(const Config::CacheParams& mainCacheParams, const Config::CacheParams& victimCacheParams, std::size_t levelIndex) : 
+    mainCache_(mainCacheParams), 
+    levelIndex_(levelIndex),
+    victimCache_(victimCacheParams.size_ > 0 ? std::make_optional(victimCacheParams) : std::nullopt) {}
 
 AccessResult LevelCache::read(Address addr) {
     AccessResult mainResult = mainCache_.read(addr);

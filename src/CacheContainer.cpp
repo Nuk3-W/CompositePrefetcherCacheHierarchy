@@ -2,7 +2,7 @@
 
 
 CacheContainer::CacheContainer(const Config::CacheParams& params) : params_(params), blocks_(params.sets_ * params.assoc_) {
-    const int addressBits = sizeof(Address) * 8;
+    constexpr int addressBits = sizeof(Address) * 8;
     
     blockBits_ = static_cast<int>(std::log2(params_.blockSize_));
     int setBits = static_cast<int>(std::log2(params_.sets_));
@@ -25,14 +25,6 @@ std::optional<std::reference_wrapper<CacheBlock>> CacheContainer::findBlock(Addr
     return std::nullopt;
 } 
 
-CacheContainer::iterator CacheContainer::setBegin(Address address) {
-    Address setIndex = (address & bitMasks_.setBits_) >> blockBits_;
-    return blocks_.begin() + (setIndex * params_.assoc_);
-}
 
-CacheContainer::iterator CacheContainer::setEnd(Address address) {
-    Address setIndex = (address & bitMasks_.setBits_) >> blockBits_;
-    return blocks_.begin() + ((setIndex + 1) * params_.assoc_);
-}
 
 

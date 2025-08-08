@@ -39,12 +39,6 @@ public:
     void recordSwap(std::size_t level);
     void recordWriteback(std::size_t level);
 
-    void recordHit(std::size_t level);
-    void recordMiss(std::size_t level);
-    void recordEviction(std::size_t level);
-    void recordWriteBack(std::size_t level);
-
-    void printStats() const;
     void printDetailedStats() const;
 
 private:

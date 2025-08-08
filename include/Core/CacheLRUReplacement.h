@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Config/CacheParams.h"
 #include "Core/CacheContainer.h"
 #include "Core/CacheBlock.h"
 #include "Core/Types.h"

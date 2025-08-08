@@ -9,8 +9,6 @@
 template<typename Block>
 class IBlockCollection {
 public:
-    using iterator = typename std::vector<Block>::iterator;
-
     virtual ~IBlockCollection() = default;
 
     virtual std::optional<std::reference_wrapper<Block>> findBlock(Address address) = 0;
