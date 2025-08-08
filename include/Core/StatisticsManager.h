@@ -28,7 +28,7 @@ struct LevelStats {
     uint64_t evictions_{};
 };
 
-// singleton class for recording statistics
+// singleton class for easy logging
 class StatisticsManager {
 public:
     static StatisticsManager& getInstance();

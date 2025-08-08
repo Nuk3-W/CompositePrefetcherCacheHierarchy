@@ -50,13 +50,7 @@ void MemoryController::pullFromLowerLevels(Address addr) {
 }
 
 void MemoryController::insertBlock(CacheBlock& block, Address addr, AccessType accessType) {
-    block.setAddress(addr);
-    block.setValid();
-    if (accessType == AccessType::Write) {
-        block.setDirty();
-    } else {
-        block.clearDirty();
-    }
+    block.initialize(addr, accessType);
 }
 
 

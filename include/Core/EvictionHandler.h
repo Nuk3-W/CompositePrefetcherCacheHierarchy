@@ -38,11 +38,7 @@ public:
 
 private:
     void setupBlock(AccessResult& result, Address address) {
-        // used over copy because meta data on reads is no preserved
-        Utils::getBlock(result).setAddress(address);
-        Utils::getBlock(result).setValid();
-        Utils::getBlock(result).clearDirty();
-        
+        Utils::getBlock(result).initialize(address, AccessType::Read);
     }
     
     void traverseCacheHierarchy(Address addr, std::size_t startLevel, std::vector<LevelCache>& levels) {

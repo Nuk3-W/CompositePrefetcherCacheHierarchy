@@ -10,9 +10,6 @@ CacheContainer::CacheContainer(const Config::CacheParams& params) : params_(para
 
     bitMasks_.setBits_ = Utils::makeMask(blockBits_, setBits);
     bitMasks_.tagBits_ = Utils::makeMask(blockBits_ + setBits, tagBits);
-
-    std::cout << "setBits:   " << std::bitset<32>(bitMasks_.setBits_) << std::endl;
-    std::cout << "tagBits:   " << std::bitset<32>(bitMasks_.tagBits_) << std::endl;
 }
 
 std::optional<std::reference_wrapper<CacheBlock>> CacheContainer::findBlock(Address address) {

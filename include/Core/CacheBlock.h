@@ -44,13 +44,23 @@ public:
     uint32_t getMetaData() const { return data_.metaData_; }
     
     uint32_t getLRU() const { return data_.metaData_ & s_lruMask; }
-    void setLRU(uint8_t lru) { data_.metaData_ = (data_.metaData_ & ~s_lruMask) | lru; }
-    void incrementLRU() { data_.metaData_ += 1; }
+    void setLRU(uint8_t lru) { data_.metaData_ = (data_.metaData_ & ~s_lruMask) | (static_cast<uint32_t>(lru) & s_lruMask); }
+    void incrementLRU() { setLRU(static_cast<uint8_t>((getLRU() + 1) & 0xFF)); }
 
     void copy(const CacheBlock& other) {
         data_.address_ = other.data_.address_;
         uint32_t sourceState = other.data_.metaData_ & (s_validMask | s_dirtyMask);
         uint32_t preservedLRU = data_.metaData_ & s_lruMask;
         data_.metaData_ = sourceState | preservedLRU;
+    }
+
+    void initialize(Address addr, AccessType accessType) {
+        data_.address_ = addr;
+        data_.metaData_ |= s_validMask;
+        if (accessType == AccessType::Write) {
+            data_.metaData_ |= s_dirtyMask;
+        } else {
+            data_.metaData_ &= ~s_dirtyMask;
+        }
     }
 };
