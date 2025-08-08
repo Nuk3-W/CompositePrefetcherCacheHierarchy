@@ -18,7 +18,7 @@ public:
 private:
     AccessResult handleVictimCacheAccess(Address addr, AccessResult& mainResult);
 private:
-    CacheContainerManager mainCache_;
-    std::optional<CacheContainerManager> victimCache_{ std::nullopt };
+    CacheContainerManager<CacheBlock> mainCache_;
+    std::optional<CacheContainerManager<CacheBlock>> victimCache_{ std::nullopt };
     std::size_t levelIndex_;
 };
