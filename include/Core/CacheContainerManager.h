@@ -19,6 +19,6 @@ private:
     AccessResult evict(Address addr);
 
 private:
-    CacheContainer cache_;
-    CacheLRUReplacement replacementPolicy_;
+    CacheContainer<CacheBlock> cache_;
+    CacheLRUReplacement<CacheBlock> replacementPolicy_;
 };

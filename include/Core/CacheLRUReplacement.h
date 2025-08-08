@@ -5,21 +5,23 @@
 #include "Core/Types.h"
 
 using LRUValue = uint8_t;
-using CacheBlockRef = std::reference_wrapper<CacheBlock>;
 
+template<typename Block>
 class CacheLRUReplacement {
 public:
+    using CacheContainerT = CacheContainer<Block>;
+    using BlockRef = std::reference_wrapper<Block>;
+
     CacheLRUReplacement() = default;
     ~CacheLRUReplacement() = default;
 
-    CacheBlockRef evict(CacheContainer& container, Address addr) {
+    BlockRef evict(CacheContainerT& container, Address addr) {
         auto setBegin = container.setBegin(addr);
         auto setEnd = container.setEnd(addr);
         
         auto leastRecentlyUsedBlock = setBegin;
         LRUValue highestLRUValue = leastRecentlyUsedBlock->getLRU();
         
-        // find LRU block or invalid block prefer invalid block
         for (auto currentBlock = setBegin; currentBlock != setEnd; ++currentBlock) {
             if (!currentBlock->isValid()) {
                 updateLRU(container, addr, *currentBlock);
@@ -35,7 +37,7 @@ public:
         return *leastRecentlyUsedBlock;
     }
     
-    void updateLRU(CacheContainer& container, Address addr, CacheBlock& accessedBlock) {
+    void updateLRU(CacheContainerT& container, Address addr, Block& accessedBlock) {
         const LRUValue accessedBlockLRU = accessedBlock.getLRU();
         for (auto currentBlock = container.setBegin(addr); currentBlock != container.setEnd(addr); ++currentBlock) {
             if (currentBlock->getLRU() <= accessedBlockLRU) {
