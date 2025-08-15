@@ -6,15 +6,21 @@ MemoryController::MemoryController(const Config::SystemParams& params) {
         Config::CacheParams victimParams = (i < params.vCaches_.size()) ? params.vCaches_[i] : Config::CacheParams{};
         caches_.emplace_back(params.caches_[i], victimParams, i);
     }
+    const auto& tp = params.controlParams_.trackerParams_;
+    if (tp.blockSize_ > 0 && tp.assoc_ > 0) {
+        superBlockTracker_.emplace(tp);
+    }
 }
 
 void MemoryController::read(Address addr) {
+    if (superBlockTracker_) superBlockTracker_->updateOnAccess(addr);
     AccessResult result = caches_[rootLevelIndex_].read(addr);
     if (Utils::isType<Hit>(result)) return;
     handleCacheMiss(addr, result, AccessType::Read);
 }
 
 void MemoryController::write(Address addr) {
+    if (superBlockTracker_) superBlockTracker_->updateOnAccess(addr);
     AccessResult result = caches_[rootLevelIndex_].write(addr);
     if (Utils::isType<Hit>(result)) return;
     handleCacheMiss(addr, result, AccessType::Write);

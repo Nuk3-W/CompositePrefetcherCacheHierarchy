@@ -6,7 +6,7 @@
 #include <vector>
 #include <cmath>
 
-#include "Config/Params.h"
+#include "Config/SystemParams.h"
 
 // Using directives for cleaner code
 using Config::CacheParams;
@@ -25,6 +25,9 @@ void buildMaps(std::unordered_map<std::string, unsigned long>& sizeMap,
         std::cerr << "Error opening config file.\n";
         return;
 	}
+
+    unsigned long trackerAssoc = 0;
+    unsigned long superblockBits = 0;
 
     while ( std::getline(file, line) ) {
 		std::istringstream iss(line);
@@ -52,7 +55,20 @@ void buildMaps(std::unordered_map<std::string, unsigned long>& sizeMap,
             unsigned long val;
             iss >> val;
             assocMap[level] = val;
+        } else if ( key == "k_tracker" ) {
+            iss >> trackerAssoc;
+        } else if ( key == "superblock_bits" ) {
+            iss >> superblockBits;
         }
+    }
+
+    if (trackerAssoc > 0 && superblockBits > 0) {
+        CacheParams tp;
+        tp.blockSize_ = static_cast<uint32_t>(params.blockSize_ << superblockBits);
+        tp.assoc_ = static_cast<uint32_t>(trackerAssoc);
+        tp.sets_ = 1;
+        tp.size_ = tp.blockSize_ * tp.assoc_ * tp.sets_;
+        params.controlParams_.trackerParams_ = tp;
     }
 }
 

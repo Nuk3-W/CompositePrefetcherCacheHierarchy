@@ -5,9 +5,11 @@
 #include "Config/SystemParams.h"
 #include "Core/Types.h"
 #include "Utils/VariantUtils.h"
+#include "Core/SuperBlockTracker.h"
 
 #include <vector>
 #include <memory>
+#include <optional>
 
 class MemoryController {
 public:
@@ -24,6 +26,7 @@ private:
 private:
     std::vector<LevelCache> caches_;
     EvictionHandler evictionHandler_;
+    std::optional<SuperBlockTracker> superBlockTracker_;
     
     static constexpr std::size_t rootLevelIndex_ = 0;
     static constexpr std::size_t firstLowerLevelIndex_ = 1;

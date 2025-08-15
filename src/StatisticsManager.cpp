@@ -44,6 +44,11 @@ void StatisticsManager::recordWriteback(std::size_t level) {
     levelStats_[level].writebacks_++;
 }
 
+void StatisticsManager::recordSuperBlockAccess(std::size_t level, CacheResult result) {
+    ensureLevelExists(level);
+    superBlockHits_ += (result == CacheResult::Hit);
+    superBlockMisses_ += (result == CacheResult::Miss);
+}
 
 void StatisticsManager::printDetailedStats() const {
     std::cout << "\n=== Detailed Cache Statistics ===\n";
@@ -83,6 +88,9 @@ void StatisticsManager::printDetailedStats() const {
             std::cout << "  Miss Rate: " << std::fixed << std::setprecision(4) 
                       << missRate << "\n";
         }
+
+        std::cout << "  Super Block Hits: " << superBlockHits_ << "\n";
+        std::cout << "  Super Block Misses: " << superBlockMisses_ << "\n";
         
         std::cout << "\n";
     }

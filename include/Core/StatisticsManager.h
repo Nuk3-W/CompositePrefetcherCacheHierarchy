@@ -38,6 +38,7 @@ public:
     void recordSwapRequest(std::size_t level);
     void recordSwap(std::size_t level);
     void recordWriteback(std::size_t level);
+    void recordSuperBlockAccess(std::size_t level, CacheResult result);
 
     void printDetailedStats() const;
 
@@ -51,5 +52,7 @@ private:
     ~StatisticsManager() = default;
 
     std::vector<LevelStats> levelStats_;
+    uint64_t superBlockHits_{};
+    uint64_t superBlockMisses_{};
     uint64_t totalAccesses_{};
 }; 

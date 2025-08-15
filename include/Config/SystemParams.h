@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include "CacheParams.h"
+#include "PrefetcherParams.h"
 
 namespace Config {
 
@@ -12,6 +13,7 @@ namespace Config {
         uint32_t blockSize_{};
         std::vector<CacheParams> caches_{};
         std::vector<CacheParams> vCaches_{};
+        ControlUnitParams controlParams_{};
     };
 
 } 

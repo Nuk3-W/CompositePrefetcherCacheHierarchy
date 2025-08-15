@@ -44,7 +44,9 @@ CacheContainer<Block>::CacheContainer(const Config::CacheParams& params)
     int setBits = static_cast<int>(std::log2(params_.sets_));
     int tagBits = addressBits - (blockBits_ + setBits);
     bitMasks_.setBits_ = Utils::makeMask(blockBits_, setBits);
+    Utils::printMask("setBits", bitMasks_.setBits_);
     bitMasks_.tagBits_ = Utils::makeMask(blockBits_ + setBits, tagBits);
+    Utils::printMask("tagBits", bitMasks_.tagBits_);
 }
 
 template<typename Block>
