@@ -11,10 +11,10 @@ public:
     void record(bool hit) {
         double x = hit ? 1.0 : 0.0;
         if (!initialized) {
-            value = x;  // initialize to first observation
+            value = x;
             initialized = true;
         } else {
-            value = alpha * x + (1.0 - alpha) * value;
+            value = alpha * value + (1.0 - alpha) * x;
         }
     }
 

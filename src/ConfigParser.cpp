@@ -36,6 +36,7 @@ void buildMaps(std::unordered_map<std::string, unsigned long>& sizeMap,
 
         if ( key == "block_size" ) {
             iss >> params.blockSize_;
+            params.controlParams_.prefetchBlockSize_ = static_cast<uint32_t>(params.blockSize_);
         } else if ( key == "trace_file" ) {
             std::string filename;
             iss >> filename;
@@ -69,6 +70,7 @@ void buildMaps(std::unordered_map<std::string, unsigned long>& sizeMap,
         tp.sets_ = 1;
         tp.size_ = tp.blockSize_ * tp.assoc_ * tp.sets_;
         params.controlParams_.trackerParams_ = tp;
+        
     }
 }
 

@@ -2,7 +2,13 @@
 
 PrefetchController::PrefetchController(const Config::ControlUnitParams& params)
     : superBlockTracker_(params.trackerParams_),
-      prefetchStrategies_(makeAll(std::make_index_sequence<Count>{})) {
+      prefetchStrategies_([&]{
+          std::array<std::unique_ptr<IPrefetchStrategy>, Count> a{};
+          a[Noop] = std::make_unique<NoopPrefetchStrategy>();
+          a[Sequential] = std::make_unique<SequentialPrefetchStrategy>(params.prefetchBlockSize_);
+          a[Markov] = std::make_unique<MarkovPrefetchStrategy>(params.prefetchBlockSize_);
+          return a;
+      }()) {
 }
 
 void PrefetchController::updateTrackerOnAccess(Address addr) {
@@ -10,12 +16,10 @@ void PrefetchController::updateTrackerOnAccess(Address addr) {
     bool isHit = result.has_value();
     hitEwma_.record(isHit);
     double r = hitEwma_.getRate();
-    std::cout << "Hit rate: " << r << std::endl;
-    if (r >= enableThresh_) {
-        currentStrategy_ = Noop;
-    } else if (r < disableThresh_) {
-        currentStrategy_ = Noop;
-    }
+    //std::cout << "Hit rate: " << r << std::endl;
+    if (r >= enableThresh_) currentStrategy_ = Sequential;
+    else if (r < disableThresh_) currentStrategy_ = Markov;
+    prefetchStrategies_[Markov]->onAccess(addr);
 }
 
 

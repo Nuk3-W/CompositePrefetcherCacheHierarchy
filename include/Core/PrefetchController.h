@@ -4,6 +4,8 @@
 #include "Config/CacheParams.h"
 #include "Interface/IPrefetchStrategy.h"
 #include "Core/NoopPrefetchStrategy.h"
+#include "Core/SequentialPrefetchStrategy.h"
+#include "Core/MarkovPrefetchStrategy.h"
 #include <array>
 #include <memory>
 #include <tuple>
@@ -13,8 +15,8 @@
 class PrefetchController {
 public:
     // used for strategy creation
-    using Strategies = std::tuple<NoopPrefetchStrategy>;
-    enum StrategyType { Noop };
+    using Strategies = std::tuple<NoopPrefetchStrategy, SequentialPrefetchStrategy, MarkovPrefetchStrategy>;
+    enum StrategyType { Noop, Sequential, Markov };
     static constexpr size_t Count = std::tuple_size_v<Strategies>;
     
     PrefetchController(const Config::ControlUnitParams& params);
@@ -29,6 +31,10 @@ public:
     void updateTrackerOnAccess(Address addr);
 
     void prefetch (Address missAddr);
+    std::optional<std::reference_wrapper<CacheBlock>> getPrefetchBuffer() {
+        if (prefetchBuffer_) return std::ref(*prefetchBuffer_);
+        return std::nullopt;
+    }
 
 private:
     template <typename T>
@@ -52,7 +58,7 @@ private:
     // but it's a simple way to implement a prefetch buffer with pipelined memory access
     std::optional<CacheBlock> prefetchBuffer_;
 
-    EWMA hitEwma_{0.9};
-    double enableThresh_{0.75};
-    double disableThresh_{0.65};
+    EWMA hitEwma_{0.5};
+    double enableThresh_{0.65};
+    double disableThresh_{0.35};
 };

@@ -8,6 +8,7 @@ namespace Config {
     // Control unit configuration for prefetching
     struct ControlUnitParams {
         CacheParams trackerParams_{};
+        uint32_t prefetchBlockSize_{};
     };
 
 } 
