@@ -6,8 +6,8 @@
 
 class MarkovPrefetchStrategy : public IPrefetchStrategy {
 public:
-    explicit MarkovPrefetchStrategy(uint32_t blockSize)
-        : ghb_(512, blockSize) {
+    MarkovPrefetchStrategy(uint32_t blockSize)
+        : ghb_(1024, blockSize) {
         int blockBits = static_cast<int>(std::log2(blockSize));
         constexpr int addressBits = sizeof(Address) * 8;
         blockMask_ = Utils::makeMask(blockBits, addressBits - blockBits);

@@ -26,6 +26,12 @@ void PrefetchController::updateTrackerOnAccess(Address addr) {
 void PrefetchController::prefetch(Address missAddr) {
     auto prefetchAddr = prefetchStrategies_[currentStrategy_]->prefetch(missAddr);
     if (prefetchAddr) {
-        prefetchBuffer_->initialize(*prefetchAddr, AccessType::Read);
+        std::cout << "Prefetching: " << std::hex << *prefetchAddr << std::dec << std::endl;
+        std::cout << "Prefetching type: " << currentStrategy_ << std::endl;
+        prefetchBuffer_.initialize(*prefetchAddr, AccessType::Read);
     }
+}
+
+void PrefetchController::updateOnMiss(Address addr) {
+    prefetchStrategies_[Markov]->onAccess(addr);
 }

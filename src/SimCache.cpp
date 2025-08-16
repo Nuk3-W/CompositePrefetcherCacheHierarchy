@@ -37,6 +37,7 @@ int main(int argc, char* argv[]) {
     Address addr;
 
     while (trace >> op >> std::hex >> addr) {
+        std::cout << "Reading: " << std::hex << addr << std::dec << std::endl;
         if (op == READ_OPERATION) {
 			memoryController.read(addr);
         }

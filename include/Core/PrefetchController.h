@@ -29,12 +29,14 @@ public:
     PrefetchController& operator=(PrefetchController&&) = default;
     
     void updateTrackerOnAccess(Address addr);
+    void updateOnMiss(Address addr);
 
     void prefetch (Address missAddr);
-    std::optional<std::reference_wrapper<CacheBlock>> getPrefetchBuffer() {
-        if (prefetchBuffer_) return std::ref(*prefetchBuffer_);
-        return std::nullopt;
+    std::reference_wrapper<CacheBlock> getPrefetchBuffer() {
+        return std::ref(prefetchBuffer_);
     }
+
+
 
 private:
     template <typename T>
@@ -56,7 +58,7 @@ private:
 
     // it might be strange to use a single block as a stream buffer
     // but it's a simple way to implement a prefetch buffer with pipelined memory access
-    std::optional<CacheBlock> prefetchBuffer_;
+    CacheBlock prefetchBuffer_{};
 
     EWMA hitEwma_{0.5};
     double enableThresh_{0.65};
