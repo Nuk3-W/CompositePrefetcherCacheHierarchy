@@ -4,7 +4,7 @@
 
 class NoopPrefetchStrategy : public IPrefetchStrategy {
 public:
-    std::optional<AccessResult> prefetch(Address addr) override {
+    std::optional<Address> prefetch(Address addr) override {
         return std::nullopt;
     }
 };

@@ -1,6 +1,7 @@
 #include "Core/MemoryController.h"
 
-MemoryController::MemoryController(const Config::SystemParams& params) {
+MemoryController::MemoryController(const Config::SystemParams& params) :
+    prefetchController_(params.controlParams_.trackerParams_.size_ > 0 ? std::make_optional(PrefetchController(params.controlParams_)) : std::nullopt) {
     caches_.reserve(params.caches_.size());
     for (std::size_t i = 0; i < params.caches_.size(); ++i) {
         Config::CacheParams victimParams = (i < params.vCaches_.size()) ? params.vCaches_[i] : Config::CacheParams{};
@@ -9,12 +10,18 @@ MemoryController::MemoryController(const Config::SystemParams& params) {
 }
 
 void MemoryController::read(Address addr) {
+    if (prefetchController_) {
+        prefetchController_->updateTrackerOnAccess(addr);
+    }
     AccessResult result = caches_[rootLevelIndex_].read(addr);
     if (Utils::isType<Hit>(result)) return;
     handleCacheMiss(addr, result, AccessType::Read);
 }
 
 void MemoryController::write(Address addr) {
+    if (prefetchController_) {
+        prefetchController_->updateTrackerOnAccess(addr);
+    }
     AccessResult result = caches_[rootLevelIndex_].write(addr);
     if (Utils::isType<Hit>(result)) return;
     handleCacheMiss(addr, result, AccessType::Write);

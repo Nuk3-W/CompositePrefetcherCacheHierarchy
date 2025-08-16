@@ -5,6 +5,6 @@
 
 class IPrefetchStrategy {
 public:
-    virtual std::optional<AccessResult> prefetch(Address addr) = 0;
+    virtual std::optional<Address> prefetch(Address addr) = 0;
     virtual ~IPrefetchStrategy() = default;
 };

@@ -7,6 +7,8 @@
 #include <array>
 #include <memory>
 #include <tuple>
+#include <optional>
+#include "Core/EWMA.h"
 
 class PrefetchController {
 public:
@@ -25,7 +27,8 @@ public:
     PrefetchController& operator=(PrefetchController&&) = default;
     
     void updateTrackerOnAccess(Address addr);
-    void updateOnMiss(Address addr);
+
+    void prefetch (Address missAddr);
 
 private:
     template <typename T>
@@ -43,7 +46,13 @@ private:
     SuperBlockTracker superBlockTracker_;
 
     std::array<std::unique_ptr<IPrefetchStrategy>, Count> prefetchStrategies_;
-    StrategyType currentStrategy_;
+    StrategyType currentStrategy_{Noop};
 
-    uint32_t threshold_{};
+    // it might be strange to use a single block as a stream buffer
+    // but it's a simple way to implement a prefetch buffer with pipelined memory access
+    std::optional<CacheBlock> prefetchBuffer_;
+
+    EWMA hitEwma_{0.9};
+    double enableThresh_{0.75};
+    double disableThresh_{0.65};
 };

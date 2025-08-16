@@ -7,11 +7,21 @@ PrefetchController::PrefetchController(const Config::ControlUnitParams& params)
 
 void PrefetchController::updateTrackerOnAccess(Address addr) {
     auto result = superBlockTracker_.updateOnAccess(addr);
-    if (result) {
-        currentStrategy_ = (*result > threshold_) ? Noop : Noop;
+    bool isHit = result.has_value();
+    hitEwma_.record(isHit);
+    double r = hitEwma_.getRate();
+    std::cout << "Hit rate: " << r << std::endl;
+    if (r >= enableThresh_) {
+        currentStrategy_ = Noop;
+    } else if (r < disableThresh_) {
+        currentStrategy_ = Noop;
     }
 }
 
-void PrefetchController::updateOnMiss(Address addr) {
-    
+
+void PrefetchController::prefetch(Address missAddr) {
+    auto prefetchAddr = prefetchStrategies_[currentStrategy_]->prefetch(missAddr);
+    if (prefetchAddr) {
+        prefetchBuffer_->initialize(*prefetchAddr, AccessType::Read);
+    }
 }

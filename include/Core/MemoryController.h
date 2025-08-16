@@ -6,6 +6,7 @@
 #include "Core/Types.h"
 #include "Utils/VariantUtils.h"
 #include "Core/SuperBlockTracker.h"
+#include "Core/PrefetchController.h"
 
 #include <vector>
 #include <memory>
@@ -26,6 +27,7 @@ private:
 private:
     std::vector<LevelCache> caches_;
     EvictionHandler evictionHandler_;
+    std::optional<PrefetchController> prefetchController_;
     
     static constexpr std::size_t rootLevelIndex_ = 0;
     static constexpr std::size_t firstLowerLevelIndex_ = 1;
