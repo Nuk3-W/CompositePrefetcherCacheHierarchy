@@ -26,7 +26,6 @@ private:
 private:
     std::vector<LevelCache> caches_;
     EvictionHandler evictionHandler_;
-    std::optional<SuperBlockTracker> superBlockTracker_;
     
     static constexpr std::size_t rootLevelIndex_ = 0;
     static constexpr std::size_t firstLowerLevelIndex_ = 1;
