@@ -6,8 +6,8 @@
 
 class MarkovPrefetchStrategy : public IPrefetchStrategy {
 public:
-    MarkovPrefetchStrategy(uint32_t blockSize)
-        : ghb_(1024, blockSize) {
+    MarkovPrefetchStrategy(uint32_t blockSize) : 
+        ghb_(256, blockSize) {
         int blockBits = static_cast<int>(std::log2(blockSize));
         constexpr int addressBits = sizeof(Address) * 8;
         blockMask_ = Utils::makeMask(blockBits, addressBits - blockBits);
@@ -19,7 +19,7 @@ public:
         return predictedAddr & blockMask_;
     }
 
-    void onAccess(Address addr) override {
+    void onMiss(Address addr) override {
         ghb_.insert(addr);
     }
 

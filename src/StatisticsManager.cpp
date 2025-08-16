@@ -50,6 +50,15 @@ void StatisticsManager::recordSuperBlockAccess(std::size_t level, CacheResult re
     superBlockMisses_ += (result == CacheResult::Miss);
 }
 
+void StatisticsManager::recordPrefetchHit(uint32_t strategyId) {
+    switch (strategyId) {
+    case 0: prefetchStats_.noopHits_++; break;
+    case 1: prefetchStats_.sequentialHits_++; break;
+    case 2: prefetchStats_.markovHits_++; break;
+    default: break;
+    }
+}
+
 void StatisticsManager::printDetailedStats() const {
     std::cout << "\n=== Detailed Cache Statistics ===\n";
     
@@ -88,10 +97,13 @@ void StatisticsManager::printDetailedStats() const {
             std::cout << "  Miss Rate: " << std::fixed << std::setprecision(4) 
                       << missRate << "\n";
         }
-
-        std::cout << "  Super Block Hits: " << superBlockHits_ << "\n";
-        std::cout << "  Super Block Misses: " << superBlockMisses_ << "\n";
         
         std::cout << "\n";
     }
+
+    std::cout << "  Super Block Hits: " << superBlockHits_ << "\n";
+    std::cout << "  Super Block Misses: " << superBlockMisses_ << "\n";
+    std::cout << "  Prefetch Hits: Seq=" << prefetchStats_.sequentialHits_
+              << ", Markov=" << prefetchStats_.markovHits_
+              << ", Noop=" << prefetchStats_.noopHits_ << "\n";
 } 

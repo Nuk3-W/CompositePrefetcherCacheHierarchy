@@ -6,6 +6,11 @@
 #include "Core/NoopPrefetchStrategy.h"
 #include "Core/SequentialPrefetchStrategy.h"
 #include "Core/MarkovPrefetchStrategy.h"
+#include "Core/PrefetchBuffer.h"
+#include "Core/StatisticsManager.h"
+#include "Utils/VariantUtils.h"
+
+
 #include <array>
 #include <memory>
 #include <tuple>
@@ -31,9 +36,13 @@ public:
     void updateTrackerOnAccess(Address addr);
     void updateOnMiss(Address addr);
 
-    void prefetch (Address missAddr);
-    std::reference_wrapper<CacheBlock> getPrefetchBuffer() {
-        return std::ref(prefetchBuffer_);
+    std::reference_wrapper<CacheBlock> prefetch (Address missAddr);
+    AccessResult probe(Address addr) { 
+        AccessResult result = prefetchBuffer_.read(addr);
+        if (Utils::isType<Hit>(result)) {
+            StatisticsManager::getInstance().recordPrefetchHit(static_cast<uint32_t>(currentStrategy_));
+        }
+        return result;
     }
 
 
@@ -56,9 +65,7 @@ private:
     std::array<std::unique_ptr<IPrefetchStrategy>, Count> prefetchStrategies_;
     StrategyType currentStrategy_{Noop};
 
-    // it might be strange to use a single block as a stream buffer
-    // but it's a simple way to implement a prefetch buffer with pipelined memory access
-    CacheBlock prefetchBuffer_{};
+    PrefetchBuffer prefetchBuffer_;
 
     EWMA hitEwma_{0.5};
     double enableThresh_{0.65};

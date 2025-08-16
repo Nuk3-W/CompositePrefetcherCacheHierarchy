@@ -28,18 +28,29 @@ void MemoryController::write(Address addr) {
 }
 
 void MemoryController::handleCacheMiss(Address addr, AccessResult cacheResult, AccessType accessType) {
-
-
+    
     if (Utils::isType<Evict>(cacheResult)) {
         evictionHandler_.processEviction(cacheResult, rootLevelIndex_, caches_);
     }
+
+    if (prefetchController_) {
+        AccessResult prefetchResult = prefetchController_->probe(addr);
+        if (Utils::isType<Hit>(prefetchResult)) {
+            probeLowerLevelsAndInstall(prefetchController_->prefetch(addr).get().getAddress());
+            Utils::getBlock(cacheResult).initialize(addr, accessType); 
+            return;
+        }
+    }
+
     probeLowerLevelsAndInstall(addr);
+
     
     Utils::getBlock(cacheResult).initialize(addr, accessType); 
 
     if (prefetchController_) {
         prefetchController_->updateOnMiss(addr);
-        prefetchController_->prefetch(addr);
+        // will pollute only the lower levels of the cache hierarchy
+        probeLowerLevelsAndInstall(prefetchController_->prefetch(addr).get().getAddress());
     }
 }
 

@@ -28,6 +28,12 @@ struct LevelStats {
     uint64_t evictions_{};
 };
 
+struct PrefetchStats {
+    uint64_t noopHits_{};
+    uint64_t sequentialHits_{};
+    uint64_t markovHits_{};
+};
+
 // singleton class for easy logging
 class StatisticsManager {
 public:
@@ -39,6 +45,7 @@ public:
     void recordSwap(std::size_t level);
     void recordWriteback(std::size_t level);
     void recordSuperBlockAccess(std::size_t level, CacheResult result);
+    void recordPrefetchHit(uint32_t strategyId);
 
     void printDetailedStats() const;
 
@@ -55,4 +62,5 @@ private:
     uint64_t superBlockHits_{};
     uint64_t superBlockMisses_{};
     uint64_t totalAccesses_{};
+    PrefetchStats prefetchStats_{};
 }; 

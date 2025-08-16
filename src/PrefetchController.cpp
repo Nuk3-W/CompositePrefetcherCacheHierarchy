@@ -2,6 +2,7 @@
 
 PrefetchController::PrefetchController(const Config::ControlUnitParams& params)
     : superBlockTracker_(params.trackerParams_),
+      prefetchBuffer_(params.prefetchBlockSize_),
       prefetchStrategies_([&]{
           std::array<std::unique_ptr<IPrefetchStrategy>, Count> a{};
           a[Noop] = std::make_unique<NoopPrefetchStrategy>();
@@ -19,19 +20,17 @@ void PrefetchController::updateTrackerOnAccess(Address addr) {
     //std::cout << "Hit rate: " << r << std::endl;
     if (r >= enableThresh_) currentStrategy_ = Sequential;
     else if (r < disableThresh_) currentStrategy_ = Markov;
-    prefetchStrategies_[Markov]->onAccess(addr);
 }
 
 
-void PrefetchController::prefetch(Address missAddr) {
+std::reference_wrapper<CacheBlock> PrefetchController::prefetch(Address missAddr) {
     auto prefetchAddr = prefetchStrategies_[currentStrategy_]->prefetch(missAddr);
     if (prefetchAddr) {
-        std::cout << "Prefetching: " << std::hex << *prefetchAddr << std::dec << std::endl;
-        std::cout << "Prefetching type: " << currentStrategy_ << std::endl;
-        prefetchBuffer_.initialize(*prefetchAddr, AccessType::Read);
+        return prefetchBuffer_.offer(*prefetchAddr);
     }
+    return prefetchBuffer_.getBlock();
 }
 
 void PrefetchController::updateOnMiss(Address addr) {
-    prefetchStrategies_[Markov]->onAccess(addr);
+    prefetchStrategies_[Markov]->onMiss(addr);
 }
