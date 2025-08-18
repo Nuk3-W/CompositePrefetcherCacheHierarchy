@@ -45,7 +45,7 @@ public:
     
     uint32_t getLRU() const override { return data_.metaData_ & s_lruMask; }
     void setLRU(uint8_t lru) override { data_.metaData_ = (data_.metaData_ & ~s_lruMask) | (static_cast<uint32_t>(lru) & s_lruMask); }
-    void incrementLRU() override { setLRU(static_cast<uint8_t>((getLRU() + 1) & 0xFF)); }
+    void incrementLRU() override { setLRU(static_cast<uint8_t>((getLRU() + 1) & static_cast<uint8_t>(s_lruMask))); }
 
     void copy(const CacheBlock& other) {
         data_.address_ = other.data_.address_;

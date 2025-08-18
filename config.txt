@@ -1,4 +1,4 @@
-trace_file go_trace.txt
+trace_file gcc_trace.txt
 block_size 16
 l1_size 1024
 l1_assoc 1
