@@ -29,7 +29,7 @@ void PrefetchController::updateTrackerOnAccess(Address addr) {
 std::reference_wrapper<CacheBlock> PrefetchController::prefetch(Address missAddr) {
     auto prefetchAddr = prefetchStrategies_[currentStrategy_]->prefetch(missAddr);
     if (prefetchAddr) {
-        return prefetchBuffer_.offer(*prefetchAddr);
+        return prefetchBuffer_.offer(*prefetchAddr, static_cast<uint32_t>(currentStrategy_));
     }
     return prefetchBuffer_.getBlock();
 }

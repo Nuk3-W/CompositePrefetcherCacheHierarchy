@@ -21,17 +21,21 @@ public:
 		return Miss{std::ref(prefetchBlock_)};
 	}
 
-	std::reference_wrapper<CacheBlock> offer(Address addr) {
+	std::reference_wrapper<CacheBlock> offer(Address addr, uint32_t strategy) {
 		Address blockAddr = addr & blockMask_;
 		prefetchBlock_.initialize(blockAddr, AccessType::Read);
+		currentStrategy_ = strategy;
 		return std::ref(prefetchBlock_);
 	}
 
 	std::reference_wrapper<CacheBlock> getBlock() { return std::ref(prefetchBlock_); }
+	
+	uint32_t getCurrentStrategy() const { return currentStrategy_; }
 
 private:
 	CacheBlock prefetchBlock_{};
 	Address blockMask_{};
+	uint32_t currentStrategy_{0};
 };
 
 

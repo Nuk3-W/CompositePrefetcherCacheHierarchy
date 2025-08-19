@@ -40,7 +40,7 @@ public:
     AccessResult probe(Address addr) { 
         AccessResult result = prefetchBuffer_.read(addr);
         if (Utils::isType<Hit>(result)) {
-            StatisticsManager::getInstance().recordPrefetchHit(static_cast<uint32_t>(currentStrategy_));
+            StatisticsManager::getInstance().recordPrefetchHit(prefetchBuffer_.getCurrentStrategy());
         }
         return result;
     }
