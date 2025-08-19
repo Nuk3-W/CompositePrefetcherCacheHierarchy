@@ -60,6 +60,18 @@ void buildMaps(std::unordered_map<std::string, unsigned long>& sizeMap,
             iss >> trackerAssoc;
         } else if ( key == "superblock_bits" ) {
             iss >> superblockBits;
+        } else if ( key == "alpha" ) {
+            double alpha;
+            iss >> alpha;
+            params.controlParams_.alpha_ = alpha;
+        } else if ( key == "enable_threshold" ) {
+            double threshold;
+            iss >> threshold;
+            params.controlParams_.enableThreshold_ = threshold;
+        } else if ( key == "disable_threshold" ) {
+            double threshold;
+            iss >> threshold;
+            params.controlParams_.disableThreshold_ = threshold;
         }
     }
 

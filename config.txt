@@ -7,3 +7,6 @@ l2_size 8192
 l2_assoc 4
 k_tracker 4
 superblock_bits 3
+alpha 0.36
+enable_threshold 0.65
+disable_threshold 0.35

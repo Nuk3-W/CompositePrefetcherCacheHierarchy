@@ -3,6 +3,9 @@
 PrefetchController::PrefetchController(const Config::ControlUnitParams& params)
     : superBlockTracker_(params.trackerParams_),
       prefetchBuffer_(params.prefetchBlockSize_),
+      hitEwma_(params.alpha_),
+      enableThresh_(params.enableThreshold_),
+      disableThresh_(params.disableThreshold_),
       prefetchStrategies_([&]{
           std::array<std::unique_ptr<IPrefetchStrategy>, Count> a{};
           a[Noop] = std::make_unique<NoopPrefetchStrategy>();

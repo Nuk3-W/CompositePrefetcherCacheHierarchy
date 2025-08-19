@@ -67,7 +67,7 @@ private:
 
     PrefetchBuffer prefetchBuffer_;
 
-    EWMA hitEwma_{0.5};
-    double enableThresh_{0.65};
-    double disableThresh_{0.35};
+    EWMA hitEwma_;
+    double enableThresh_;
+    double disableThresh_;
 };
