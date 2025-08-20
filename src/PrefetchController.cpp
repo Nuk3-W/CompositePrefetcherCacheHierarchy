@@ -20,7 +20,6 @@ void PrefetchController::updateTrackerOnAccess(Address addr) {
     bool isHit = result.has_value();
     hitEwma_.record(isHit);
     double r = hitEwma_.getRate();
-    //std::cout << "Hit rate: " << r << std::endl;
     if (r >= enableThresh_) currentStrategy_ = Sequential;
     else if (r < disableThresh_) currentStrategy_ = Markov;
 }
