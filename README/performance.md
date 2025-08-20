@@ -28,7 +28,7 @@ This graph shows the relationship between the EWMA (Exponentially Weighted Movin
 
 ### Combined vs Individual Prefetcher Performance
 
-Note: Changed SuperBlockTracker after analyzing more multiple combinations
+Note: Changed SuperBlockTracker after analyzing multiple combinations
 trace_file compress_trace.txt
 block_size 16
 l1_size 1024
