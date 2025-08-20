@@ -43,6 +43,7 @@ Edit `config.txt` to configure the simulator.
 
 ### Learn more
 - Architecture overview: [README/architecture.md](README/architecture.md)
+- Performance analysis: [README/performance.md](README/performance.md)
 
 ### Papers
 
